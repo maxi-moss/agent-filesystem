@@ -1,48 +1,133 @@
-/**
- * List direct children (files and implicit directories) under the given path.
- * Queries entries by prefix and filters to immediate children in application code.
- */
-export function ls(path: string): string {
-  throw new Error("Not implemented");
+import * as db from "./db.js";
+import yargsParser from "yargs-parser";
+import { ensureTrailingSlash, globToRegex } from "./helpers.js";
+
+let cwd = "/";
+
+function getContent(path: string): string | null {
+  return db.getRow(path)?.content ?? null;
 }
 
-/**
- * Return the full content of the file at the given path.
- * Returns an error message if the path doesn't exist.
- */
-export function cat(path: string): string {
-  throw new Error("Not implemented");
+function resolvePath(path: string): string {
+  if (path.startsWith("/")) return path;
+  return ensureTrailingSlash(cwd) + path;
 }
 
-/**
- * Search for a regex/keyword pattern across all files under the given path.
- * Queries entries by prefix, then applies regex matching in application code.
- * Returns matching lines prefixed with their file path.
- */
-export function grep(pattern: string, path: string, flags: Record<string, string | boolean>): string {
-  throw new Error("Not implemented");
+export function getCwd(): string {
+  return cwd;
 }
 
-/**
- * Traverse all entries under the given path and filter by glob pattern.
- * Queries entries by prefix, then applies glob matching in application code.
- */
-export function find(path: string, name: string): string {
-  throw new Error("Not implemented");
+export function resetCwd(): void {
+  cwd = "/";
 }
 
-/**
- * Update the agent's current working directory.
- * Returns the new working directory path.
- */
-export function cd(path: string): string {
-  throw new Error("Not implemented");
-}
-
-/**
- * Return the given content as a string.
- * Primary use: producing content for `>` redirection to write memories.
- */
+/** Join args into a string. */
 export function echo(args: string[]): string {
-  throw new Error("Not implemented");
+  return args.join(" ");
+}
+
+/** Read a file's content. */
+export function cat(path: string): string {
+  const resolved = resolvePath(path);
+  const content = getContent(resolved);
+  if (content === null) {
+    throw new Error(`cat: ${resolved}: No such file`);
+  }
+  return content;
+}
+
+/** List direct children under a path. */
+export function ls(path: string): string {
+  const resolved = resolvePath(path);
+
+  if (getContent(resolved) !== null) {
+    return resolved.split("/").pop()!;
+  }
+
+  const dir = ensureTrailingSlash(resolved);
+  const rows = db.queryByPrefix(dir);
+
+  if (rows.length === 0) {
+    throw new Error(`ls: ${resolved}: No such file or directory`);
+  }
+
+  const children = new Set<string>();
+  for (const row of rows) {
+    const relative = row.path.slice(dir.length);
+    const firstSegment = relative.split("/")[0];
+    if (!firstSegment) continue;
+
+    const isDir = relative.includes("/");
+    children.add(isDir ? firstSegment + "/" : firstSegment);
+  }
+
+  return [...children].sort().join("\n");
+}
+
+/** grep [-i] [-l] PATTERN [PATH] */
+export function grep(args: string[]): string {
+  const flags = yargsParser(args, {
+    boolean: ["i", "l"],
+    configuration: { "parse-numbers": false },
+  });
+
+  const [pattern, ...paths] = flags._ as string[];
+  if (!pattern) throw new Error("grep: missing pattern");
+
+  const searchPath = resolvePath(paths[0] ?? cwd);
+  const regex = new RegExp(pattern, flags.i ? "i" : "");
+  const rows = db.queryByPrefix(searchPath);
+  const matches: string[] = [];
+
+  for (const row of rows) {
+    const lines = row.content.split("\n");
+    for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+      if (regex.test(lines[lineNum]!)) {
+        if (flags.l) {
+          matches.push(row.path);
+          break;
+        }
+        matches.push(`${row.path}:${lineNum + 1}:${lines[lineNum]}`);
+      }
+    }
+  }
+
+  return matches.join("\n");
+}
+
+/** find PATH [-name PATTERN] */
+export function find(args: string[]): string {
+  const flags = yargsParser(args, {
+    string: ["name"],
+    configuration: { "parse-numbers": false, "short-option-groups": false },
+  });
+
+  const searchPath = resolvePath((flags._[0] as string | undefined) ?? cwd);
+  const namePattern = flags.name;
+  const rows = db.queryByPrefix(searchPath);
+
+  let paths = rows.map((r) => r.path);
+
+  if (namePattern) {
+    const regex = globToRegex(namePattern);
+    paths = paths.filter((p) => regex.test(p.split("/").pop()!));
+  }
+
+  if (paths.length === 0) {
+    throw new Error("find: no matches");
+  }
+  return paths.join("\n");
+}
+
+/** Change working directory. */
+export function cd(path: string): string {
+  const resolved = ensureTrailingSlash(resolvePath(path));
+  const rows = db.queryByPrefix(resolved);
+
+  if (rows.length === 0) {
+    throw new Error(`cd: ${resolved}: No such directory`);
+  }
+
+  cwd = resolved;
+  return cwd;
 }
