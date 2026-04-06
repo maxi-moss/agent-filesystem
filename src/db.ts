@@ -1,35 +1,64 @@
 import Database from "better-sqlite3";
 
-let db: Database.Database;
+export interface FileRow {
+  path: string;
+  content: string;
+  created: string;
+  updated: string;
+}
 
-/**
- * Initialize the SQLite database connection and create the entries table
- * if it doesn't exist. Must be called before any other db function.
- */
+const DEFAULT_DB_PATH = "./memory-store.db";
+
+let db: Database.Database | null = null;
+
+function setup(dbPath: string): Database.Database {
+  const instance = new Database(dbPath);
+  instance.pragma("journal_mode = WAL");
+  instance.exec(`
+    CREATE TABLE IF NOT EXISTS files (
+      path    TEXT PRIMARY KEY,
+      content TEXT NOT NULL,
+      created TEXT NOT NULL,
+      updated TEXT NOT NULL
+    )
+  `);
+  return instance;
+}
+
+function getDb(): Database.Database {
+  if (!db) {
+    db = setup(DEFAULT_DB_PATH);
+  }
+  return db;
+}
+
+/** Re-initialize with a different database path. */
 export function init(dbPath: string): void {
-  throw new Error("Not implemented");
+  if (db) db.close();
+  db = setup(dbPath);
 }
 
-/**
- * Retrieve a single entry by its exact path.
- * Returns the content string, or null if the path doesn't exist.
- */
-export function getByPath(path: string): string | null {
-  throw new Error("Not implemented");
+/** Get a single row by exact path. */
+export function getRow(path: string): FileRow | undefined {
+  return getDb().prepare("SELECT * FROM files WHERE path = ?").get(path) as FileRow | undefined;
 }
 
-/**
- * Query all entries whose path starts with the given prefix.
- * Returns an array of { path, content } objects.
- */
-export function queryByPrefix(prefix: string): Array<{ path: string; content: string }> {
-  throw new Error("Not implemented");
+/** Get all rows matching a path prefix. */
+export function queryByPrefix(prefix: string): FileRow[] {
+  const escaped = prefix.replace(/[%_\\]/g, "\\$&");
+  return getDb()
+    .prepare("SELECT * FROM files WHERE path LIKE ? ESCAPE '\\'")
+    .all(escaped + "%") as FileRow[];
 }
 
-/**
- * Insert or update an entry at the given path.
- * Sets `created` on first insert, updates `updated` on every write.
- */
+/** Insert or update a file. */
 export function upsert(path: string, content: string): void {
-  throw new Error("Not implemented");
+  const now = new Date().toISOString();
+  getDb().prepare(
+    `INSERT INTO files (path, content, created, updated)
+     VALUES (@path, @content, @now, @now)
+     ON CONFLICT(path) DO UPDATE SET
+       content = excluded.content,
+       updated = excluded.updated`
+  ).run({ path, content, now });
 }
