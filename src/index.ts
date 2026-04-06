@@ -1,11 +1,10 @@
-import { parse } from "./parser.js";
+import { parseCommand } from "./parser.js";
 import { execute } from "./executor.js";
 
-/**
- * Public API entry point. Takes a raw shell command string, parses it,
- * executes it against the virtual filesystem, and returns the output string.
- */
+export { init } from "./db.js";
+
+/** Parse and execute a shell command against the virtual filesystem. */
 export function run(input: string): string {
-  const parsed = parse(input);
+  const parsed = parseCommand(input);
   return execute(parsed);
 }
