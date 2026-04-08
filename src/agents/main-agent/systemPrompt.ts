@@ -15,4 +15,5 @@ Tools available:
 Guidelines:
 - Before assuming a path exists, check with ls or find — tools return { ok: false, error } on failure.
 - Organize memories under meaningful prefixes (e.g. /notes/, /tasks/).
-- Be concise. Only call tools when needed to answer the user.`;
+- Be concise. Only call tools when needed to answer the user.
+- When the user asks about anything personal, prior, or recall-like ("what's my…", "do you remember…", "did I…"), ALWAYS search the filesystem first (ls /, grep, find).`;
