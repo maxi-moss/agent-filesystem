@@ -1,11 +1,12 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  ANTHROPIC_API_KEY: z.string().min(1),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
   DB_PATH: z.string().default("./memory-store.db"),
-  AGENT_MODEL: z.string().default("claude-sonnet-4-5"),
+  AGENT_MODEL: z.string().default("openai/gpt-4.1-mini"),
   AGENT_MAX_STEPS: z.coerce.number().int().positive().default(10),
-  SUMMARIZER_MODEL: z.string().default("claude-sonnet-4-5"),
+  OPENAI_API_KEY: z.string().min(1).optional(),
+  SUMMARIZER_MODEL: z.string().default("openai/gpt-4.1-mini"),
   SUMMARY_DIR: z.string().default("/summaries"),
 });
 
@@ -15,6 +16,11 @@ if (!parsed.success) {
   process.exit(1);
 }
 const env = parsed.data;
+
+export const apiKeyConfig = {
+  anthropic: env.ANTHROPIC_API_KEY,
+  openai: env.OPENAI_API_KEY
+} as const;
 
 export const dbConfig = {
   path: env.DB_PATH,
