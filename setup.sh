@@ -6,7 +6,10 @@ echo "=== Setting up agent-filesystem TypeScript project ==="
 # Install dependencies
 pnpm install
 
+# Compile Typescript
+pnpm build
+
 echo ""
 echo "=== Setup complete ==="
-echo "  pnpm run build  - compile TypeScript"
-echo "  pnpm run dev    - run with ts-node"
+echo "  pnpm build  - re-compile TypeScript"
+echo "  pnpm dev    - run REPL "
