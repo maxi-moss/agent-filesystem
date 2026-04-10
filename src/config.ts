@@ -8,6 +8,8 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().min(1).optional(),
   SUMMARIZER_MODEL: z.string().default("openai/gpt-4.1-mini"),
   SUMMARY_DIR: z.string().default("/summaries"),
+  MEMORY_AGENT_MODEL: z.string().default("openai/gpt-4.1-mini"),
+  MEMORY_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(15),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -34,4 +36,9 @@ export const agentConfig = {
 export const summarizerConfig = {
   model: env.SUMMARIZER_MODEL,
   dir: env.SUMMARY_DIR,
+} as const;
+
+export const memoryAgentConfig = {
+  model: env.MEMORY_AGENT_MODEL,
+  maxSteps: env.MEMORY_AGENT_MAX_STEPS,
 } as const;
