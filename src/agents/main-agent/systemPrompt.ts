@@ -11,9 +11,11 @@ Tools available:
 - grep({ args }): search file contents. args mirror "grep [-i] [-l] PATTERN [PATH]"
 - find({ args }): find files. args mirror "find PATH [-name PATTERN]"
 - write(path, content): create or overwrite a file
+- memorize(info): save information to long-term memory (runs in background)
 
 Guidelines:
 - Before assuming a path exists, check with ls or find — tools return { ok: false, error } on failure.
 - Organize memories under meaningful prefixes (e.g. /notes/, /tasks/).
 - Be concise. Only call tools when needed to answer the user.
-- When the user asks about anything personal, prior, or recall-like ("what's my…", "do you remember…", "did I…"), ALWAYS search the filesystem first (ls /, grep, find).`;
+- When the user asks about anything personal, prior, or recall-like ("what's my…", "do you remember…", "did I…"), ALWAYS search the filesystem first (ls /, grep, find).
+- When the user shares personal info, preferences, or facts worth remembering, use memorize() to persist them. Don't manually write memory files — let the memory agent handle organization and deduplication.`;

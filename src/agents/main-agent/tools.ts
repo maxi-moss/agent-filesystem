@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import * as commands from "../../filesystem/commands.js";
 import * as db from "../../filesystem/db.js";
+import { runMemoryAgent } from "../memory-agent/index.js";
 
 type ToolResult =
   | { ok: true; output: string }
@@ -54,5 +55,17 @@ export const fsTools = {
         db.upsert(path, content);
         return `Wrote to ${path}`;
       }),
+  }),
+
+  memorize: tool({
+    description:
+      "Store information to long-term memory. A background agent deduplicates and cross-links automatically. Fire-and-forget — returns immediately.",
+    inputSchema: z.object({
+      info: z.string().describe("Natural-language statement of what to remember."),
+    }),
+    execute: ({ info }) => {
+      runMemoryAgent(info);
+      return { ok: true as const, output: "Memorizing in background." };
+    },
   }),
 };
