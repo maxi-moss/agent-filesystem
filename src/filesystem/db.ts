@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import { dbConfig } from "../config.js";
 
 export interface FileRow {
   path: string;
@@ -7,7 +8,7 @@ export interface FileRow {
   updated: string;
 }
 
-const DEFAULT_DB_PATH = "./memory-store.db";
+const DEFAULT_DB_PATH = dbConfig.path;
 
 let db: Database.Database | null = null;
 
