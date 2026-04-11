@@ -8,7 +8,7 @@ type ToolResult =
   | { ok: true; output: string }
   | { ok: false; error: string };
 
-function wrap(fn: () => string): ToolResult {
+function formatError(fn: () => string): ToolResult {
   try {
     return { ok: true, output: fn() };
   } catch (e) {
@@ -20,38 +20,38 @@ export const fsTools = {
   cat: tool({
     description: "Read the contents of a file at PATH.",
     inputSchema: z.object({ path: z.string() }),
-    execute: ({ path }) => wrap(() => commands.cat(path)),
+    execute: ({ path }) => formatError(() => commands.cat(path)),
   }),
 
   ls: tool({
     description: "List direct children of a directory. Defaults to the current working directory.",
     inputSchema: z.object({ path: z.string().optional() }),
-    execute: ({ path }) => wrap(() => commands.ls(path ?? commands.getCwd())),
+    execute: ({ path }) => formatError(() => commands.ls(path ?? commands.getCwd())),
   }),
 
   cd: tool({
     description: "Change the current working directory.",
     inputSchema: z.object({ path: z.string() }),
-    execute: ({ path }) => wrap(() => commands.cd(path)),
+    execute: ({ path }) => formatError(() => commands.cd(path)),
   }),
 
   grep: tool({
     description: 'Search file contents. args mirror "grep [-i] [-l] PATTERN [PATH]".',
     inputSchema: z.object({ args: z.array(z.string()) }),
-    execute: ({ args }) => wrap(() => commands.grep(args)),
+    execute: ({ args }) => formatError(() => commands.grep(args, "main-agent")),
   }),
 
   find: tool({
     description: 'Find files by name. args mirror "find PATH [-name PATTERN]".',
     inputSchema: z.object({ args: z.array(z.string()) }),
-    execute: ({ args }) => wrap(() => commands.find(args)),
+    execute: ({ args }) => formatError(() => commands.find(args)),
   }),
 
   write: tool({
     description: "Create or overwrite a file at PATH with CONTENT.",
     inputSchema: z.object({ path: z.string(), content: z.string() }),
     execute: ({ path, content }) =>
-      wrap(() => {
+      formatError(() => {
         db.upsert(path, content);
         return `Wrote to ${path}`;
       }),

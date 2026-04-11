@@ -7,7 +7,7 @@ type ToolResult =
   | { ok: true; output: string }
   | { ok: false; error: string };
 
-function wrap(fn: () => string): ToolResult {
+function formatError(fn: () => string): ToolResult {
   try {
     return { ok: true, output: fn() };
   } catch (e) {
@@ -19,14 +19,14 @@ export const memoryTools = {
   cat: tool({
     description: "Read the contents of a file at PATH (absolute path).",
     inputSchema: z.object({ path: z.string() }),
-    execute: ({ path }) => wrap(() => commands.cat(path)),
+    execute: ({ path }) => formatError(() => commands.cat(path)),
   }),
 
   grep: tool({
     description:
       'Search file contents. args mirror "grep [-i] [-l] PATTERN [PATH]". Always use absolute paths.',
     inputSchema: z.object({ args: z.array(z.string()) }),
-    execute: ({ args }) => wrap(() => commands.grep(args)),
+    execute: ({ args }) => formatError(() => commands.grep(args)),
   }),
 
   write: tool({
@@ -34,7 +34,7 @@ export const memoryTools = {
       "Create or overwrite a file at PATH with CONTENT (absolute path).",
     inputSchema: z.object({ path: z.string(), content: z.string() }),
     execute: ({ path, content }) =>
-      wrap(() => {
+      formatError(() => {
         db.upsert(path, content);
         return `Wrote to ${path}`;
       }),
