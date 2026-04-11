@@ -2,14 +2,14 @@ import { z } from "zod";
 
 const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
-  DB_PATH: z.string().default("./memory-store.db"),
-  AGENT_MODEL: z.string().default("openai/gpt-4.1-mini"),
-  AGENT_MAX_STEPS: z.coerce.number().int().positive().default(10),
+  DB_PATH: z.string().default("./filesystem.db"),
+  MAIN_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(10),
+  MAIN_AGENT_MODEL: z.string().default("openai/gpt-4.1-mini"),
+  MEMORY_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(15),
+  MEMORY_AGENT_MODEL: z.string().default("openai/gpt-4.1-mini"),
   OPENAI_API_KEY: z.string().min(1).optional(),
   SUMMARIZER_MODEL: z.string().default("openai/gpt-4.1-mini"),
-  SUMMARY_DIR: z.string().default("/summaries"),
-  MEMORY_AGENT_MODEL: z.string().default("openai/gpt-4.1-mini"),
-  MEMORY_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(15),
+  SUMMARY_DIR: z.string().default("/summaries")
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -28,17 +28,17 @@ export const dbConfig = {
   path: env.DB_PATH,
 } as const;
 
-export const agentConfig = {
-  model: env.AGENT_MODEL,
-  maxSteps: env.AGENT_MAX_STEPS,
-} as const;
-
-export const summarizerConfig = {
-  model: env.SUMMARIZER_MODEL,
-  dir: env.SUMMARY_DIR,
+export const mainAgentConfig = {
+  model: env.MAIN_AGENT_MODEL,
+  maxSteps: env.MAIN_AGENT_MAX_STEPS,
 } as const;
 
 export const memoryAgentConfig = {
   model: env.MEMORY_AGENT_MODEL,
   maxSteps: env.MEMORY_AGENT_MAX_STEPS,
+} as const;
+
+export const summarizerConfig = {
+  model: env.SUMMARIZER_MODEL,
+  dir: env.SUMMARY_DIR,
 } as const;
