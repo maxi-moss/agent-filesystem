@@ -18,7 +18,7 @@ Rules:
 - Always use absolute paths (starting with /).
 - When updating a file, you MUST cat it first, then write the complete updated content. write overwrites the entire file.
 - Prefer updating an existing file over creating a new one.
-- When creating files, place them in a directory that fits the existing structure. If no structure exists yet, use a flat layout under /.
+- When creating files, place them in a directory that fits the existing structure. Use 'ls' to discover available folders.
 - Be concise in file content — store facts, not filler.
 - Do not reorganize or rename existing files unless necessary for the current task.`;
 }
