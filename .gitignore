@@ -1,19 +1,13 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
-/node_modules
-/.pnp
+node_modules
 .pnp.js
 
 # testing
-/coverage
-
-# next.js
-/.next/
-/out/
+coverage
 
 # production
-/build
+build
+dist
 
 # misc
 .DS_Store
@@ -21,20 +15,22 @@
 
 # debug
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # local env files
 .env*.local
 .env
 
-# vercel
-.vercel
-
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
-# General
-dist
+
+# database
 *.db*
+
+# svelte
+.svelte-kit
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# vercel
+.vercel
