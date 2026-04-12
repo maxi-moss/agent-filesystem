@@ -1,8 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
 import * as commands from "../../filesystem/commands.js";
-import * as db from "../../filesystem/db.js";
 import { runMemoryAgent } from "../memory-agent/index.js";
+
+const AGENT_NAME = "main-agent";
 
 type ToolResult =
   | { ok: true; output: string }
@@ -20,41 +21,39 @@ export const fsTools = {
   cat: tool({
     description: "Read the contents of a file at PATH.",
     inputSchema: z.object({ path: z.string() }),
-    execute: ({ path }) => formatError(() => commands.cat(path)),
+    execute: ({ path }) => formatError(() => commands.cat(path, AGENT_NAME)),
   }),
 
   ls: tool({
     description: "List direct children of a directory. Defaults to the current working directory.",
     inputSchema: z.object({ path: z.string().optional() }),
-    execute: ({ path }) => formatError(() => commands.ls(path ?? commands.getCwd())),
+    execute: ({ path }) =>
+      formatError(() => commands.ls(path ?? commands.getCwd(), AGENT_NAME)),
   }),
 
   cd: tool({
     description: "Change the current working directory.",
     inputSchema: z.object({ path: z.string() }),
-    execute: ({ path }) => formatError(() => commands.cd(path)),
+    execute: ({ path }) => formatError(() => commands.cd(path, AGENT_NAME)),
   }),
 
   grep: tool({
     description: 'Search file contents. args mirror "grep [-i] [-l] PATTERN [PATH]".',
     inputSchema: z.object({ args: z.array(z.string()) }),
-    execute: ({ args }) => formatError(() => commands.grep(args, "main-agent")),
+    execute: ({ args }) => formatError(() => commands.grep(args, AGENT_NAME)),
   }),
 
   find: tool({
     description: 'Find files by name. args mirror "find PATH [-name PATTERN]".',
     inputSchema: z.object({ args: z.array(z.string()) }),
-    execute: ({ args }) => formatError(() => commands.find(args)),
+    execute: ({ args }) => formatError(() => commands.find(args, AGENT_NAME)),
   }),
 
   write: tool({
     description: "Create or overwrite a file at PATH with CONTENT.",
     inputSchema: z.object({ path: z.string(), content: z.string() }),
     execute: ({ path, content }) =>
-      formatError(() => {
-        db.upsert(path, content);
-        return `Wrote to ${path}`;
-      }),
+      formatError(() => commands.write(path, content, AGENT_NAME)),
   }),
 
   memorize: tool({

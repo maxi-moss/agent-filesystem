@@ -4,8 +4,10 @@ import { buildSystemPrompt } from "./systemPrompt.js";
 import { buildFiletree } from "./buildFiletree.js";
 import { memoryAgentConfig } from "../../config.js";
 
+const AGENT_NAME = "memory-agent";
+
 export function runMemoryAgent(info: string): void {
-  const filetree = buildFiletree();
+  const filetree = buildFiletree(AGENT_NAME);
   const system = buildSystemPrompt(filetree);
 
   generateText({

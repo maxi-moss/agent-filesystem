@@ -1,11 +1,19 @@
 import * as db from "../../filesystem/db.js";
+import {
+  resolveAgentAccess,
+  isInNamespaces,
+} from "../../filesystem/namespaces.js";
 
 interface TreeNode {
   children: Map<string, TreeNode>;
 }
 
-export function buildFiletree(): string {
-  const rows = db.queryByPrefix("/");
+export function buildFiletree(agent: string): string {
+  const access = resolveAgentAccess(agent);
+  const rows = db
+    .queryByPrefix("/")
+    .filter((row) => isInNamespaces(row.path, access));
+
   if (rows.length === 0) return "/ (empty)";
 
   const root: TreeNode = { children: new Map() };

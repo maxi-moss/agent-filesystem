@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import * as commands from "../../filesystem/commands.js";
-import * as db from "../../filesystem/db.js";
+
+const AGENT_NAME = "memory-agent";
 
 type ToolResult =
   | { ok: true; output: string }
@@ -19,14 +20,14 @@ export const memoryTools = {
   cat: tool({
     description: "Read the contents of a file at PATH (absolute path).",
     inputSchema: z.object({ path: z.string() }),
-    execute: ({ path }) => formatError(() => commands.cat(path)),
+    execute: ({ path }) => formatError(() => commands.cat(path, AGENT_NAME)),
   }),
 
   grep: tool({
     description:
       'Search file contents. args mirror "grep [-i] [-l] PATTERN [PATH]". Always use absolute paths.',
     inputSchema: z.object({ args: z.array(z.string()) }),
-    execute: ({ args }) => formatError(() => commands.grep(args)),
+    execute: ({ args }) => formatError(() => commands.grep(args, AGENT_NAME)),
   }),
 
   write: tool({
@@ -34,9 +35,6 @@ export const memoryTools = {
       "Create or overwrite a file at PATH with CONTENT (absolute path).",
     inputSchema: z.object({ path: z.string(), content: z.string() }),
     execute: ({ path, content }) =>
-      formatError(() => {
-        db.upsert(path, content);
-        return `Wrote to ${path}`;
-      }),
+      formatError(() => commands.write(path, content, AGENT_NAME)),
   }),
 };
