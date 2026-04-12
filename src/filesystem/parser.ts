@@ -1,21 +1,23 @@
 import { parse } from "just-bash";
-import type { WordNode } from "just-bash";
+import type { SimpleCommandNode, WordNode } from "just-bash";
 
 type WordPart = WordNode["parts"][number];
-
-export interface Redirect {
-  type: ">";
-  target: string;
-}
+type RedirectionNode = SimpleCommandNode["redirections"][number];
 
 export interface ParsedCommand {
   command: string;
   args: string[];
-  redirects: Redirect[];
+  /** Target path of a `>` redirect, if present. */
+  redirect?: string | undefined;
 }
 
 function resolveWord(word: WordNode): string {
   return word.parts.map(resolvePart).join("");
+}
+
+function resolveRedirect(nodes: RedirectionNode[]): string | undefined {
+  const node = nodes.find((n) => n.operator === ">");
+  return node ? resolveWord(node.target as WordNode) : undefined;
 }
 
 function resolvePart(part: WordPart): string {
@@ -43,8 +45,6 @@ export function parseCommand(input: string): ParsedCommand {
   return {
     command: cmd.name ? resolveWord(cmd.name) : "",
     args: cmd.args.map(resolveWord),
-    redirects: cmd.redirections
-      .filter((r) => r.operator === ">")
-      .map((r) => ({ type: ">" as const, target: resolveWord(r.target as WordNode) })),
+    redirect: resolveRedirect(cmd.redirections),
   };
 }
