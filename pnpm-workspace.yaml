@@ -1,6 +1,6 @@
-ignoredBuiltDependencies:
-  - '@mongodb-js/zstd'
-  - node-liblzma
+packages:
+  - backend
+  - frontend
 
 onlyBuiltDependencies:
   - better-sqlite3

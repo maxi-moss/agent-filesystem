@@ -1,0 +1,31 @@
+{
+  "name": "@agent-filesystem/backend",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx --env-file=.env src/cli.ts",
+    "test": "vitest run",
+    "scheduler": "tsx --env-file=.env src/scheduler/main.ts"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.5.2",
+    "@types/yargs-parser": "^21.0.3",
+    "@vitest/coverage-v8": "^4.1.2",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.52",
+    "ai": "^6.0.149",
+    "better-sqlite3": "^12.8.0",
+    "just-bash": "^2.14.0",
+    "yargs-parser": "^22.0.0",
+    "zod": "^4.3.6"
+  }
+}

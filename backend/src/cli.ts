@@ -33,7 +33,11 @@ while (true) {
   messages.push({ role: "user", content: input });
   const { text, steps } = await agent.run(messages);
 
-  for (const step of steps) messages.push(...step.response.messages);
+  for (const step of steps) {
+    console.log(`[step ${steps.indexOf(step) + 1}] toolCalls: ${step.toolCalls.length}, toolResults: ${step.toolResults.length}, text: ${step.text.length > 0 ? step.text.slice(0, 80) : "(empty)"}`);
+  }
+  messages.push(...steps.flatMap((s) => s.response.messages));
 
-  console.log(text + "\n");
+  if (!text) console.log("[warn] empty response from LLM\n");
+  else console.log(text + "\n");
 }
