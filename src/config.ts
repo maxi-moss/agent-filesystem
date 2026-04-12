@@ -42,3 +42,13 @@ export const summarizerConfig = {
   model: env.SUMMARIZER_MODEL,
   dir: env.SUMMARY_DIR,
 } as const;
+
+/**
+ * Namespaces each agent is allowed to see. When an agent calls a discovery
+ * tool (e.g. `ls`), output is filtered to only include files under these
+ * namespaces. Agents not listed here have no access.
+ */
+export const agentAccess: Record<string, readonly string[]> = {
+  "main-agent": ["/memories/", "/news/", "/global/", "/summaries/"],
+  "memory-agent": ["/memories/", "/news/"],
+};
