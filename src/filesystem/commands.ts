@@ -1,6 +1,7 @@
 import * as db from "./db.js";
 import yargsParser from "yargs-parser";
 import { ensureTrailingSlash, globToRegex } from "./helpers.js";
+import { resolveAgentAccess, isInNamespaces, assertAccessible } from "./namespaces.js";
 
 let cwd = "/";
 
@@ -8,7 +9,7 @@ function getContent(path: string): string | null {
   return db.getRow(path)?.content ?? null;
 }
 
-function resolvePath(path: string): string {
+export function resolvePath(path: string): string {
   if (path.startsWith("/")) return path;
   return ensureTrailingSlash(cwd) + path;
 }
@@ -26,9 +27,18 @@ export function echo(args: string[]): string {
   return args.join(" ");
 }
 
-/** Read a file's content. */
-export function cat(path: string): string {
+/** Create or overwrite a file at PATH with CONTENT. */
+export function write(path: string, content: string, agent: string): string {
   const resolved = resolvePath(path);
+  assertAccessible(resolved, agent);
+  db.upsert(resolved, content);
+  return `Wrote to ${resolved}`;
+}
+
+/** Read a file's content. */
+export function cat(path: string, agent: string): string {
+  const resolved = resolvePath(path);
+  assertAccessible(resolved, agent);
   const content = getContent(resolved);
   if (content === null) {
     throw new Error(`cat: ${resolved}: No such file`);
@@ -36,16 +46,22 @@ export function cat(path: string): string {
   return content;
 }
 
-/** List direct children under a path. */
-export function ls(path: string): string {
+/** List direct children under a path, scoped to the agent's accessible namespaces. */
+export function ls(path: string, agent: string): string {
+  const access = resolveAgentAccess(agent);
   const resolved = resolvePath(path);
 
   if (getContent(resolved) !== null) {
+    if (!isInNamespaces(resolved, access)) {
+      throw new Error(`ls: ${resolved}: No such file or directory`);
+    }
     return resolved.split("/").pop()!;
   }
 
   const dir = ensureTrailingSlash(resolved);
-  const rows = db.queryByPrefix(dir);
+  const rows = db.queryByPrefix(dir).filter((row) =>
+    isInNamespaces(row.path, access),
+  );
 
   if (rows.length === 0) {
     throw new Error(`ls: ${resolved}: No such file or directory`);
@@ -64,8 +80,10 @@ export function ls(path: string): string {
   return [...children].sort().join("\n");
 }
 
-/** grep [-i] [-l] PATTERN [PATH] */
-export function grep(args: string[]): string {
+/** grep [-i] [-l] PATTERN [PATH], scoped to the agent's accessible namespaces. */
+export function grep(args: string[], agent: string): string {
+  const access = resolveAgentAccess(agent);
+
   const flags = yargsParser(args, {
     boolean: ["i", "l"],
     configuration: { "parse-numbers": false },
@@ -76,7 +94,9 @@ export function grep(args: string[]): string {
 
   const searchPath = resolvePath(paths[0] ?? cwd);
   const regex = new RegExp(pattern, flags.i ? "i" : "");
-  const rows = db.queryByPrefix(searchPath);
+  const rows = db
+    .queryByPrefix(searchPath)
+    .filter((row) => isInNamespaces(row.path, access));
   const matches: string[] = [];
 
   for (const row of rows) {
@@ -96,13 +116,14 @@ export function grep(args: string[]): string {
 }
 
 /** find PATH [-name PATTERN] */
-export function find(args: string[]): string {
+export function find(args: string[], agent: string): string {
   const flags = yargsParser(args, {
     string: ["name"],
     configuration: { "parse-numbers": false, "short-option-groups": false },
   });
 
   const searchPath = resolvePath((flags._[0] as string | undefined) ?? cwd);
+  assertAccessible(searchPath, agent);
   const namePattern = flags.name;
   const rows = db.queryByPrefix(searchPath);
 
@@ -120,8 +141,9 @@ export function find(args: string[]): string {
 }
 
 /** Change working directory. */
-export function cd(path: string): string {
+export function cd(path: string, agent: string): string {
   const resolved = ensureTrailingSlash(resolvePath(path));
+  assertAccessible(resolved, agent);
   const rows = db.queryByPrefix(resolved);
 
   if (rows.length === 0) {
