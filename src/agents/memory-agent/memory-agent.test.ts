@@ -4,64 +4,64 @@ import { init } from "../../filesystem/index.js";
 import { buildFiletree } from "./buildFiletree.js";
 import { memoryTools } from "./tools.js";
 
+const AGENT = "memory-agent";
+
 beforeEach(() => {
   init(":memory:");
 });
 
 describe("buildFiletree", () => {
   it("returns empty marker for empty DB", () => {
-    expect(buildFiletree()).toBe("/ (empty)");
+    expect(buildFiletree(AGENT)).toBe("/ (empty)");
   });
 
-  it("renders a single file at root", () => {
-    db.upsert("/notes.md", "hello");
-    expect(buildFiletree()).toBe(
-      ["/", "└── notes.md"].join("\n"),
+  it("renders a single file under a namespace", () => {
+    db.upsert("/memories/notes.md", "hello");
+    expect(buildFiletree(AGENT)).toBe(
+      ["/", "└── memories/", "    └── notes.md"].join("\n"),
     );
   });
 
   it("renders nested structure with correct indentation", () => {
-    db.upsert("/a/b/c.md", "deep");
-    db.upsert("/a/d.md", "shallow");
-    expect(buildFiletree()).toBe(
+    db.upsert("/memories/a/b/c.md", "deep");
+    db.upsert("/memories/a/d.md", "shallow");
+    expect(buildFiletree(AGENT)).toBe(
       [
         "/",
-        "└── a/",
-        "    ├── b/",
-        "    │   └── c.md",
-        "    └── d.md",
+        "└── memories/",
+        "    └── a/",
+        "        ├── b/",
+        "        │   └── c.md",
+        "        └── d.md",
       ].join("\n"),
     );
   });
 
-  it("renders multiple top-level dirs sorted", () => {
-    db.upsert("/people/bob.md", "Bob info");
-    db.upsert("/companies/google.md", "Google info");
-    db.upsert("/notes.md", "misc");
-    expect(buildFiletree()).toBe(
+  it("renders multiple accessible namespaces sorted", () => {
+    db.upsert("/memories/bob.md", "Bob info");
+    db.upsert("/news/headline.md", "Breaking");
+    expect(buildFiletree(AGENT)).toBe(
       [
         "/",
-        "├── companies/",
-        "│   └── google.md",
-        "├── notes.md",
-        "└── people/",
-        "    └── bob.md",
+        "├── memories/",
+        "│   └── bob.md",
+        "└── news/",
+        "    └── headline.md",
       ].join("\n"),
     );
   });
 
-  it("handles sibling files and dirs correctly", () => {
-    db.upsert("/readme.md", "top");
-    db.upsert("/docs/guide.md", "guide");
-    db.upsert("/docs/api.md", "api");
-    expect(buildFiletree()).toBe(
-      [
-        "/",
-        "├── docs/",
-        "│   ├── api.md",
-        "│   └── guide.md",
-        "└── readme.md",
-      ].join("\n"),
+  it("filters out files in namespaces outside the agent's access", () => {
+    db.upsert("/memories/mine.md", "in scope");
+    db.upsert("/summaries/theirs.md", "out of scope");
+    expect(buildFiletree(AGENT)).toBe(
+      ["/", "└── memories/", "    └── mine.md"].join("\n"),
+    );
+  });
+
+  it("throws when the agent is not registered in the access table", () => {
+    expect(() => buildFiletree("unknown-agent")).toThrow(
+      "unknown-agent: agent does not exist in access table",
     );
   });
 });

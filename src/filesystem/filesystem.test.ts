@@ -5,6 +5,8 @@ import { parseCommand } from "./parser.js";
 import { execute } from "./executor.js";
 import { run, init } from "./index.js";
 
+const AGENT = "main-agent";
+
 beforeEach(() => {
   init(":memory:");
   commands.resetCwd();
@@ -15,7 +17,7 @@ describe("parseCommand", () => {
     expect(parseCommand("ls /memories/")).toEqual({
       command: "ls",
       args: ["/memories/"],
-      redirects: [],
+      redirect: undefined,
     });
   });
 
@@ -23,7 +25,7 @@ describe("parseCommand", () => {
     expect(parseCommand("cat /memories/mistakes/foo.md")).toEqual({
       command: "cat",
       args: ["/memories/mistakes/foo.md"],
-      redirects: [],
+      redirect: undefined,
     });
   });
 
@@ -31,7 +33,7 @@ describe("parseCommand", () => {
     expect(parseCommand('echo "hello world" > /memories/test.md')).toEqual({
       command: "echo",
       args: ["hello world"],
-      redirects: [{ type: ">", target: "/memories/test.md" }],
+      redirect: "/memories/test.md",
     });
   });
 
@@ -39,7 +41,7 @@ describe("parseCommand", () => {
     expect(parseCommand("echo 'single quotes' > /memories/test.md")).toEqual({
       command: "echo",
       args: ["single quotes"],
-      redirects: [{ type: ">", target: "/memories/test.md" }],
+      redirect: "/memories/test.md",
     });
   });
 
@@ -47,7 +49,7 @@ describe("parseCommand", () => {
     expect(parseCommand('grep -i "pattern" /memories/')).toEqual({
       command: "grep",
       args: ["-i", "pattern", "/memories/"],
-      redirects: [],
+      redirect: undefined,
     });
   });
 
@@ -55,7 +57,7 @@ describe("parseCommand", () => {
     expect(parseCommand('find /memories/ -name "*.md"')).toEqual({
       command: "find",
       args: ["/memories/", "-name", "*.md"],
-      redirects: [],
+      redirect: undefined,
     });
   });
 
@@ -119,69 +121,69 @@ describe("commands", () => {
   });
 
   it("cat returns file content", () => {
-    expect(commands.cat("/memories/mistakes/off-by-one.md")).toBe("Line 1\nLine 2 with error\nLine 3");
+    expect(commands.cat("/memories/mistakes/off-by-one.md", AGENT)).toBe("Line 1\nLine 2 with error\nLine 3");
   });
 
   it("cat throws for missing file", () => {
-    expect(() => commands.cat("/memories/nope.md")).toThrow("cat: /memories/nope.md: No such file");
+    expect(() => commands.cat("/memories/nope.md", AGENT)).toThrow("cat: /memories/nope.md: No such file");
   });
 
   it("ls lists top-level directories", () => {
-    expect(commands.ls("/memories/")).toBe("mistakes/\nsystem-design/\nuser-preferences/");
+    expect(commands.ls("/memories/", AGENT)).toBe("mistakes/\nsystem-design/\nuser-preferences/");
   });
 
   it("ls lists files in a category", () => {
-    expect(commands.ls("/memories/mistakes/")).toBe("null-handling.md\noff-by-one.md");
+    expect(commands.ls("/memories/mistakes/", AGENT)).toBe("null-handling.md\noff-by-one.md");
   });
 
   it("ls returns filename when called on a file", () => {
-    expect(commands.ls("/memories/mistakes/off-by-one.md")).toBe("off-by-one.md");
+    expect(commands.ls("/memories/mistakes/off-by-one.md", AGENT)).toBe("off-by-one.md");
   });
 
   it("ls throws for empty directory", () => {
-    expect(() => commands.ls("/nonexistent/")).toThrow("ls: /nonexistent/: No such file or directory");
+    expect(() => commands.ls("memories/nonexistent/", AGENT)).toThrow("ls: /memories/nonexistent/: No such file or directory")
   });
 
   it("grep finds matching lines", () => {
-    expect(commands.grep(["error", "/memories/mistakes/"])).toContain("off-by-one.md:2:Line 2 with error");
+    expect(commands.grep(["error", "/memories/mistakes/"], AGENT)).toContain("off-by-one.md:2:Line 2 with error");
   });
 
   it("grep -i is case-insensitive", () => {
-    expect(commands.grep(["-i", "ERROR", "/memories/mistakes/"])).toContain("off-by-one.md:2:Line 2 with error");
+    expect(commands.grep(["-i", "ERROR", "/memories/mistakes/"], AGENT)).toContain("off-by-one.md:2:Line 2 with error");
   });
 
   it("grep -l returns files only", () => {
-    expect(commands.grep(["-l", "null", "/memories/"])).toBe("/memories/mistakes/null-handling.md");
+    expect(commands.grep(["-l", "null", "/memories/"], AGENT)).toBe("/memories/mistakes/null-handling.md");
   });
 
   it("grep returns empty when no match", () => {
-    expect(commands.grep(["zzzzz", "/memories/"])).toBe("");
+    expect(commands.grep(["zzzzz", "/memories/"], AGENT)).toBe("");
   });
 
   it("find lists files under a path", () => {
-    expect(commands.find(["/memories/mistakes/"]).split("\n")).toHaveLength(2);
+    expect(commands.find(["/memories/mistakes/"], AGENT).split("\n")).toHaveLength(2);
   });
 
   it("find filters by glob pattern", () => {
-    expect(commands.find(["/memories/", "-name", "*.md"]).split("\n")).toHaveLength(4);
+    expect(commands.find(["/memories/", "-name", "*.md"], AGENT).split("\n")).toHaveLength(4);
   });
 
   it("find filters by specific name", () => {
-    expect(commands.find(["/memories/", "-name", "caching*"])).toBe("/memories/system-design/caching.md");
+    expect(commands.find(["/memories/", "-name", "caching*"], AGENT)).toBe("/memories/system-design/caching.md");
   });
 
   it("cd changes working directory", () => {
-    commands.cd("/memories/mistakes/");
+    commands.cd("/memories/mistakes/", AGENT);
     expect(commands.getCwd()).toBe("/memories/mistakes/");
   });
 
   it("cd throws for nonexistent directory", () => {
-    expect(() => commands.cd("/nonexistent/")).toThrow("cd: /nonexistent/: No such directory");
+    expect(() => commands.cd("/memories/nonexistent/", AGENT)).toThrow("cd: /memories/nonexistent/: No such directory");
   });
 });
 
 describe("executor", () => {
-  const exec = (input: string) => execute(parseCommand(input));
+  const exec = (input: string) => execute(parseCommand(input), AGENT);
 
   it("writes via redirect and returns confirmation", () => {
     expect(exec('echo "test content" > /memories/mistakes/test.md')).toBe("Wrote to /memories/mistakes/test.md");
@@ -203,7 +205,7 @@ describe("executor", () => {
   });
 
   it("does not redirect error output to file", () => {
-    const result = exec("cat /nonexistent.md > /memories/output.md");
+    const result = exec("cat /memories/nonexistent.md > /memories/output.md");
     expect(result).toContain("No such file");
     expect(db.getRow("/memories/output.md")).toBeUndefined();
   });
@@ -211,27 +213,27 @@ describe("executor", () => {
 
 describe("integration", () => {
   it("supports a realistic agent workflow", () => {
-    run('echo "Always use strict TypeScript" > /memories/user-preferences/typescript.md');
-    run('echo "Forgot to handle null return from db.get" > /memories/mistakes/null-handling.md');
-    run('echo "Use WAL mode for SQLite" > /memories/system-design/sqlite-config.md');
+    run('echo "Always use strict TypeScript" > /memories/user-preferences/typescript.md', AGENT);
+    run('echo "Forgot to handle null return from db.get" > /memories/mistakes/null-handling.md', AGENT);
+    run('echo "Use WAL mode for SQLite" > /memories/system-design/sqlite-config.md', AGENT);
 
-    expect(run("ls /memories/")).toBe("mistakes/\nsystem-design/\nuser-preferences/");
-    expect(run("ls /memories/mistakes/")).toBe("null-handling.md");
-    expect(run("cat /memories/mistakes/null-handling.md")).toBe("Forgot to handle null return from db.get");
-    expect(run("grep TypeScript /memories/")).toContain("user-preferences/typescript.md");
-    expect(run('find /memories/ -name "*.md"').split("\n")).toHaveLength(3);
-    expect(run("cd /memories/mistakes/")).toBe("/memories/mistakes/");
+    expect(run("ls /memories/", AGENT)).toBe("mistakes/\nsystem-design/\nuser-preferences/");
+    expect(run("ls /memories/mistakes/", AGENT)).toBe("null-handling.md");
+    expect(run("cat /memories/mistakes/null-handling.md", AGENT)).toBe("Forgot to handle null return from db.get");
+    expect(run("grep TypeScript /memories/", AGENT)).toContain("user-preferences/typescript.md");
+    expect(run('find /memories/ -name "*.md"', AGENT).split("\n")).toHaveLength(3);
+    expect(run("cd /memories/mistakes/", AGENT)).toBe("/memories/mistakes/");
 
-    run('echo "Updated: always check nulls AND undefined" > /memories/mistakes/null-handling.md');
-    expect(run("cat /memories/mistakes/null-handling.md")).toBe("Updated: always check nulls AND undefined");
+    run('echo "Updated: always check nulls AND undefined" > /memories/mistakes/null-handling.md', AGENT);
+    expect(run("cat /memories/mistakes/null-handling.md", AGENT)).toBe("Updated: always check nulls AND undefined");
   });
 
   it("handles grep output redirected to a new file", () => {
-    run('echo "auth tokens should expire after 24h" > /memories/system-design/auth.md');
-    run('echo "cache invalidation is hard" > /memories/system-design/caching.md');
-    run("grep auth /memories/system-design/ > /memories/summaries/auth-notes.md");
+    run('echo "auth tokens should expire after 24h" > /memories/system-design/auth.md', AGENT);
+    run('echo "cache invalidation is hard" > /memories/system-design/caching.md', AGENT);
+    run("grep auth /memories/system-design/ > /memories/summaries/auth-notes.md", AGENT);
 
-    expect(run("cat /memories/summaries/auth-notes.md")).toContain("auth tokens should expire");
-    expect(run("ls /memories/")).toContain("summaries/");
+    expect(run("cat /memories/summaries/auth-notes.md", AGENT)).toContain("auth tokens should expire");
+    expect(run("ls /memories/", AGENT)).toContain("summaries/");
   });
 });
