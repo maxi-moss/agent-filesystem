@@ -4,11 +4,10 @@ import type { ModelMessage } from "ai";
 import { dbConfig, summarizerConfig } from "./config.js";
 import { init } from "./index.js";
 import * as db from "./filesystem/db.js";
-import { createAgent } from "./agents/main-agent/index.js";
+import { runMainAgent } from "./agents/main-agent/index.js";
 import { summarizeConversation } from "./conversation-summary/conversationSummarizer.js";
 
 init(dbConfig.path);
-const agent = createAgent();
 const messages: ModelMessage[] = [];
 const rl = readline.createInterface({ input: stdin, output: stdout });
 
@@ -31,13 +30,19 @@ while (true) {
   if (!input) continue;
 
   messages.push({ role: "user", content: input });
-  const { text, steps } = await agent.run(messages);
+  const result = runMainAgent(messages);
 
+  for await (const chunk of result.textStream) {
+    process.stdout.write(chunk);
+  }
+
+  const steps = await result.steps;
   for (const step of steps) {
-    console.log(`[step ${steps.indexOf(step) + 1}] toolCalls: ${step.toolCalls.length}, toolResults: ${step.toolResults.length}, text: ${step.text.length > 0 ? step.text.slice(0, 80) : "(empty)"}`);
+    console.log(`\n[step ${steps.indexOf(step) + 1}] toolCalls: ${step.toolCalls.length}, toolResults: ${step.toolResults.length}, text: ${step.text.length > 0 ? step.text.slice(0, 80) : "(empty)"}`);
   }
   messages.push(...steps.flatMap((s) => s.response.messages));
 
-  if (!text) console.log("[warn] empty response from LLM\n");
-  else console.log(text + "\n");
+  const text = await result.text;
+  if (!text) console.log("\n[warn] empty response from LLM\n");
+  else console.log("\n");
 }

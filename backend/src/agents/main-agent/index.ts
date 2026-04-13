@@ -1,1 +1,1 @@
-export { createAgent } from "./agent.js";
+export { runMainAgent } from "./agent.js";
