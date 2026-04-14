@@ -1,16 +1,13 @@
-import * as db from "../../filesystem/db.js";
-import {
-  resolveAgentAccess,
-  isInNamespaces,
-} from "../../filesystem/namespaces.js";
+import { getFilesystem, resolveAgentAccess, isInNamespaces } from "../../lib/filesystem/index.js";
 
 interface TreeNode {
   children: Map<string, TreeNode>;
 }
 
 export function buildFiletree(agent: string): string {
+  const fs = getFilesystem();
   const access = resolveAgentAccess(agent);
-  const rows = db
+  const rows = fs
     .queryByPrefix("/")
     .filter((row) => isInNamespaces(row.path, access));
 

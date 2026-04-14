@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import * as db from "../../filesystem/db.js";
-import { init } from "../../filesystem/index.js";
+import { createFilesystem, getFilesystem } from "../../lib/filesystem/index.js";
 import { buildFiletree } from "./buildFiletree.js";
 import { memoryTools } from "./tools.js";
 
 const AGENT = "memory-agent";
 
 beforeEach(() => {
-  init(":memory:");
+  createFilesystem(":memory:");
 });
 
 describe("buildFiletree", () => {
@@ -16,15 +15,16 @@ describe("buildFiletree", () => {
   });
 
   it("renders a single file under a namespace", () => {
-    db.upsert("/memories/notes.md", "hello");
+    getFilesystem().upsert("/memories/notes.md", "hello");
     expect(buildFiletree(AGENT)).toBe(
       ["/", "└── memories/", "    └── notes.md"].join("\n"),
     );
   });
 
   it("renders nested structure with correct indentation", () => {
-    db.upsert("/memories/a/b/c.md", "deep");
-    db.upsert("/memories/a/d.md", "shallow");
+    const fs = getFilesystem();
+    fs.upsert("/memories/a/b/c.md", "deep");
+    fs.upsert("/memories/a/d.md", "shallow");
     expect(buildFiletree(AGENT)).toBe(
       [
         "/",
@@ -38,8 +38,9 @@ describe("buildFiletree", () => {
   });
 
   it("renders multiple accessible namespaces sorted", () => {
-    db.upsert("/memories/bob.md", "Bob info");
-    db.upsert("/news/headline.md", "Breaking");
+    const fs = getFilesystem();
+    fs.upsert("/memories/bob.md", "Bob info");
+    fs.upsert("/news/headline.md", "Breaking");
     expect(buildFiletree(AGENT)).toBe(
       [
         "/",
@@ -52,8 +53,9 @@ describe("buildFiletree", () => {
   });
 
   it("filters out files in namespaces outside the agent's access", () => {
-    db.upsert("/memories/mine.md", "in scope");
-    db.upsert("/summaries/theirs.md", "out of scope");
+    const fs = getFilesystem();
+    fs.upsert("/memories/mine.md", "in scope");
+    fs.upsert("/summaries/theirs.md", "out of scope");
     expect(buildFiletree(AGENT)).toBe(
       ["/", "└── memories/", "    └── mine.md"].join("\n"),
     );

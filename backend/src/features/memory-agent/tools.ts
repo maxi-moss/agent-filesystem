@@ -1,33 +1,22 @@
 import { tool } from "ai";
 import { z } from "zod";
-import * as commands from "../../filesystem/commands.js";
+import { getFilesystem } from "../../lib/filesystem/index.js";
+import { formatToolResult } from "../../lib/utils/formatting.js";
 
 const AGENT_NAME = "memory-agent";
-
-type ToolResult =
-  | { ok: true; output: string }
-  | { ok: false; error: string };
-
-function formatError(fn: () => string): ToolResult {
-  try {
-    return { ok: true, output: fn() };
-  } catch (e) {
-    return { ok: false, error: (e as Error).message };
-  }
-}
 
 export const memoryTools = {
   cat: tool({
     description: "Read the contents of a file at PATH (absolute path).",
     inputSchema: z.object({ path: z.string() }),
-    execute: ({ path }) => formatError(() => commands.cat(path, AGENT_NAME)),
+    execute: ({ path }) => formatToolResult(() => getFilesystem().cat(path, AGENT_NAME)),
   }),
 
   grep: tool({
     description:
       'Search file contents. args mirror "grep [-i] [-l] PATTERN [PATH]". Always use absolute paths.',
     inputSchema: z.object({ args: z.array(z.string()) }),
-    execute: ({ args }) => formatError(() => commands.grep(args, AGENT_NAME)),
+    execute: ({ args }) => formatToolResult(() => getFilesystem().grep(args, AGENT_NAME)),
   }),
 
   write: tool({
@@ -35,6 +24,6 @@ export const memoryTools = {
       "Create or overwrite a file at PATH with CONTENT (absolute path).",
     inputSchema: z.object({ path: z.string(), content: z.string() }),
     execute: ({ path, content }) =>
-      formatError(() => commands.write(path, content, AGENT_NAME)),
+      formatToolResult(() => getFilesystem().write(path, content, AGENT_NAME)),
   }),
 };

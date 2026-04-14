@@ -1,1 +1,0 @@
-export const SUMMARIZER_SYSTEM_PROMPT = `You summarize a conversation between a user and an AI agent for long-term memory. Capture: what the user wanted, key facts learned about the user, decisions made, and any unresolved threads. Be concise and factual. No preamble.`;
