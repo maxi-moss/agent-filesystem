@@ -1,13 +1,11 @@
 import * as readline from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import type { ModelMessage } from "ai";
-import { dbConfig, summarizerConfig } from "./config.js";
-import { init } from "./index.js";
-import * as db from "./filesystem/db.js";
-import { runMainAgent } from "./agents/main-agent/index.js";
-import { summarizeConversation } from "./conversation-summary/conversationSummarizer.js";
+import { dbConfig, summarizerConfig } from "./lib/config.js";
+import { createFilesystem, getFilesystem } from "./lib/filesystem/index.js";
+import { runMainAgent, summarizeConversation } from "./features/chat/index.js";
 
-init(dbConfig.path);
+createFilesystem(dbConfig.path);
 const messages: ModelMessage[] = [];
 const rl = readline.createInterface({ input: stdin, output: stdout });
 
@@ -16,7 +14,7 @@ async function endSession(): Promise<never> {
   if (messages.length > 0) {
     const summary = await summarizeConversation(messages);
     const path = `${summarizerConfig.dir}/${new Date().toISOString()}.md`;
-    db.upsert(path, summary);
+    getFilesystem().upsert(path, summary);
     console.log(`\nsession summary saved to ${path}`);
   }
   process.exit(0);
