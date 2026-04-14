@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "dev": "tsx --env-file=.env src/cli.ts",
+    "dev": "tsx --env-file=../.env src/cli.ts",
     "test": "vitest run",
-    "scheduler": "tsx --env-file=.env src/scheduler/main.ts"
+    "dev:api": "tsx --env-file=../.env src/server.ts"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
@@ -22,9 +22,10 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.52",
+    "@hono/node-server": "^1.19.13",
     "ai": "^6.0.149",
     "better-sqlite3": "^12.8.0",
-    "just-bash": "^2.14.0",
+    "hono": "^4.12.12",
     "yargs-parser": "^22.0.0",
     "zod": "^4.3.6"
   }

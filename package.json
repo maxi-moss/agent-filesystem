@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "packageManager": "pnpm@10.23.0",
   "scripts": {
+    "dev:api": "pnpm --filter @agent-filesystem/backend dev:api",
     "dev:backend": "pnpm --filter @agent-filesystem/backend dev",
     "dev:frontend": "pnpm --filter @agent-filesystem/frontend dev",
     "build": "pnpm -r build",
