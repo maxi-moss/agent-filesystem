@@ -55,6 +55,6 @@ export const summarizerConfig: { model: LanguageModel; dir: string } = {
  * namespaces. Agents not listed here have no access.
  */
 export const agentAccess: Record<string, readonly string[]> = {
-  "main-agent": ["/memories/", "/news/", "/global/", "/summaries/"],
+  "main-agent": ["/global/", "/memories/", "/news/", "/notes/", "/summaries/"],
   "memory-agent": ["/memories/", "/news/"],
 };

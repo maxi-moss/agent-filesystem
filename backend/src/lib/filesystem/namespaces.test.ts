@@ -4,9 +4,10 @@ import { resolveAgentAccess, isInNamespaces, assertAccessible } from "./namespac
 describe("resolveAgentAccess", () => {
   it("returns namespaces for a registered agent", () => {
     expect(resolveAgentAccess("main-agent")).toEqual([
+      "/global/",
       "/memories/",
       "/news/",
-      "/global/",
+      "/notes/",
       "/summaries/",
     ]);
   });
