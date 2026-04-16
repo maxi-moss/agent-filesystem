@@ -1,13 +1,26 @@
-import { getFilesystem, ensureTrailingSlash } from "../../lib/filesystem/index.js";
+import {
+  getFilesystem,
+  ensureTrailingSlash,
+  resolveAgentAccess,
+  isInNamespaces,
+} from "../../lib/filesystem/index.js";
+import type { FileRow } from "../../lib/filesystem/index.js";
 
-export function getFile(path: string) {
-  return getFilesystem().getRow(path) ?? null;
+export function getFile(path: string, accessScope: string): FileRow | null {
+  const row = getFilesystem().getRow(path);
+  if (!row) return null;
+  if (!isInNamespaces(row.path, resolveAgentAccess(accessScope))) return null;
+  return row;
 }
 
-/** List the direct children of a directory path. Returns null if no files exist under that prefix. */
-export function listDirectory(path: string) {
+/** List direct children of a directory path, filtered to the access scope's namespaces. Returns null if no entries are visible. */
+export function listDirectory(path: string, accessScope: string) {
   const dirPath = ensureTrailingSlash(path);
-  const rows = getFilesystem().queryByPrefix(dirPath);
+  const namespaces = resolveAgentAccess(accessScope);
+  const rows = getFilesystem()
+    .queryByPrefix(dirPath)
+    .filter((row) => isInNamespaces(row.path, namespaces));
+
   if (rows.length === 0) return null;
 
   const entries = new Map<string, "file" | "dir">();
@@ -18,8 +31,7 @@ export function listDirectory(path: string) {
     entries.set(firstSegment, relative.includes("/") ? "dir" : "file");
   }
 
-  const formattedEntries = formatEntries(entries);
-  return formattedEntries;
+  return formatEntries(entries);
 }
 
 /** Format directory entries as `{ name, type }` objects sorted alphabetically. Directories get a trailing slash. */
