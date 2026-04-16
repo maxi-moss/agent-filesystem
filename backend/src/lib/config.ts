@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
-  DB_PATH: z.string().default("./filesystem.db"),
+  DB_PATH: z.string().default("./memory-store.db"),
   MAIN_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(10),
   MAIN_AGENT_MODEL: z.string().default("gpt-4.1-mini"),
   MEMORY_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(15),
@@ -55,6 +55,7 @@ export const summarizerConfig: { model: LanguageModel; dir: string } = {
  * namespaces. Agents not listed here have no access.
  */
 export const agentAccess: Record<string, readonly string[]> = {
+  "all": ["/global/", "/memories/", "/news/", "/notes/", "/summaries/"],
   "main-agent": ["/global/", "/memories/", "/news/", "/notes/", "/summaries/"],
   "memory-agent": ["/memories/", "/news/"],
 };
