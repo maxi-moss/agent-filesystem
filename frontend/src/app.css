@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-surface: #0e0e10;
+  --color-surface-raised: #1a1a1e;
+  --color-surface-hover: #242428;
+  --color-border: #2a2a30;
+  --color-text-primary: #e4e4e8;
+  --color-text-secondary: #8a8a94;
+  --color-accent: #c5f500;
+  --color-accent-dim: #c5f50020;
+}
