@@ -2,6 +2,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { dbConfig } from "./lib/config.js";
+import { AppError } from "./lib/errors.js";
 import { createFilesystem } from "./lib/filesystem/index.js";
 import { chatRoutes } from "./features/chat/index.js";
 import { filesRoutes } from "./features/files/index.js";
@@ -15,7 +16,10 @@ app.route("/api/chat", chatRoutes);
 app.route("/api/files", filesRoutes);
 
 app.onError((error, context) => {
-  console.error("[api]", error);
+  if (error instanceof AppError) {
+    return context.json({ error: error.message, code: error.code }, error.status);
+  }
+  console.error("[api] unhandled", error);
   return context.json({ error: "internal server error" }, 500);
 });
 
