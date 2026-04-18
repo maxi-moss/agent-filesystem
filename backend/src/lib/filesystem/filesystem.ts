@@ -71,7 +71,9 @@ export class Filesystem {
     this.events.emit("change", { type: "upsert", path } satisfies FsChangeEvent);
   }
 
-  /** Resolve a relative path against the current working directory. Absolute paths pass through unchanged. */
+  /** Resolve a relative path against the current working directory. 
+    * Absolute paths pass through unchanged.
+   */
   resolvePath(path: string): string {
     if (path.startsWith("/")) return path;
     return ensureTrailingSlash(this.cwd) + path;
@@ -108,7 +110,9 @@ export class Filesystem {
     return content;
   }
 
-  /** List direct children of a directory, scoped to the agent's namespaces. Returns the filename if path is a file. */
+  /** List direct children of a directory, scoped to the agent's namespaces.
+    * Returns the filename if path is a file.
+    */
   ls(path: string, agent: string): string {
     const access = resolveAgentAccess(agent);
     const resolved = this.resolvePath(path);
@@ -203,7 +207,7 @@ export class Filesystem {
     return paths.join("\n");
   }
 
-  /** Change the current working directory. Throws if the directory does not exist. */
+  /** Change the current working directory. Throws if directory does not exist. */
   cd(path: string, agent: string): string {
     const resolved = ensureTrailingSlash(this.resolvePath(path));
     assertAccessible(resolved, agent);

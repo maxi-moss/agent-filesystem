@@ -13,7 +13,9 @@ export function getFile(path: string, accessScope: string): FileRow | null {
   return row;
 }
 
-/** List direct children of a directory path, filtered to the access scope's namespaces. Returns null if no entries are visible. */
+/** List direct children of a directory path, filtered to the access
+  * scope's namespaces. Returns null if no entries are visible.
+ */
 export function listDirectory(path: string, accessScope: string) {
   const dirPath = ensureTrailingSlash(path);
   const namespaces = resolveAgentAccess(accessScope);
@@ -34,7 +36,9 @@ export function listDirectory(path: string, accessScope: string) {
   return formatEntries(entries);
 }
 
-/** Format directory entries as `{ name, type }` objects sorted alphabetically. Directories get a trailing slash. */
+/** Format directory entries as `{ name, type }` objects sorted alphabetically.
+  * Directories get a trailing slash.
+ */
 function formatEntries(entries: Map<string, "file" | "dir">) {
   return [...entries.entries()]
     .map(([name, type]) => ({
