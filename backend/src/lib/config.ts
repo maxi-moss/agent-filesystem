@@ -5,10 +5,13 @@ import { z } from "zod";
 const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   DB_PATH: z.string().default("./memory-store.db"),
+  GNEWS_API_KEY: z.string().min(1).optional(),
   MAIN_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(10),
   MAIN_AGENT_MODEL: z.string().default("gpt-4.1-mini"),
   MEMORY_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(15),
   MEMORY_AGENT_MODEL: z.string().default("gpt-4.1-mini"),
+  NEWS_HEADLINES_MAX: z.coerce.number().int().positive().default(10),
+  NEWS_SEARCH_MAX: z.coerce.number().int().positive().default(10),
   OPENAI_API_KEY: z.string().min(1).optional(),
   SUMMARIZER_MODEL: z.string().default("gpt-4.1-mini"),
   SUMMARY_DIR: z.string().default("/summaries")
@@ -48,6 +51,12 @@ export const summarizerConfig: { model: LanguageModel; dir: string } = {
   model: openai(env.SUMMARIZER_MODEL),
   dir: env.SUMMARY_DIR,
 };
+
+export const newsConfig = {
+  apiKey: env.GNEWS_API_KEY,
+  searchMax: env.NEWS_SEARCH_MAX,
+  headlinesMax: env.NEWS_HEADLINES_MAX,
+} as const;
 
 /**
  * Namespaces each agent is allowed to see. When an agent calls a discovery
