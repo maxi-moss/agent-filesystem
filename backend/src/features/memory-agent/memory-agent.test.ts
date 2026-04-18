@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createFilesystem, getFilesystem } from "../../lib/filesystem/index.js";
-import { buildFiletree } from "./buildFiletree.js";
+import { buildFiletree } from "../../lib/filesystem/buildFiletree.js"
 import { memoryTools } from "./tools.js";
 
 const AGENT = "memory-agent";
