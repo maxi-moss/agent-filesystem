@@ -42,6 +42,7 @@ export type TopHeadlinesParams = {
   to?: string | undefined;
 };
 
+/** Search news articles matching the query filters. */
 export async function searchNews(params: SearchNewsParams): Promise<GNewsResponse> {
   const apiKey = requireApiKey();
   const url = buildGNewsUrl("/search", apiKey, {
@@ -54,6 +55,7 @@ export async function searchNews(params: SearchNewsParams): Promise<GNewsRespons
   return fetchGNews(url);
 }
 
+/** Fetch the current top headlines matching the given filters. */
 export async function getTopHeadlines(params: TopHeadlinesParams): Promise<GNewsResponse> {
   const apiKey = requireApiKey();
   const url = buildGNewsUrl("/top-headlines", apiKey, {
@@ -67,6 +69,7 @@ export async function getTopHeadlines(params: TopHeadlinesParams): Promise<GNews
   return fetchGNews(url);
 }
 
+/** Fetch an article URL and extract its main readable text content. */
 export async function fetchArticleContent(articleUrl: string): Promise<{ textContent: string }> {
   const articleResponse = await fetch(articleUrl, {
     headers: { "User-Agent": BROWSER_USER_AGENT },
