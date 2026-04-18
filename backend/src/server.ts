@@ -6,6 +6,7 @@ import { AppError } from "./lib/errors.js";
 import { createFilesystem } from "./lib/filesystem/index.js";
 import { chatRoutes } from "./features/chat/index.js";
 import { filesRoutes } from "./features/files/index.js";
+import { newsRoutes } from "./features/news/index.js";
 
 createFilesystem(dbConfig.path);
 
@@ -14,6 +15,7 @@ const app = new Hono();
 app.use("/api/*", cors({ origin: "http://localhost:5173" }));
 app.route("/api/chat", chatRoutes);
 app.route("/api/files", filesRoutes);
+app.route("/api/news", newsRoutes);
 
 app.onError((error, context) => {
   if (error instanceof AppError) {
