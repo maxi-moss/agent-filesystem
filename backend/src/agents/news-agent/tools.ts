@@ -9,7 +9,7 @@ import {
   fetchArticleContent,
   getTopHeadlines,
   searchNews,
-} from "./service.js";
+} from "../../features/news/service.js";
 
 const AGENT_NAME = "news-agent";
 

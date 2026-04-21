@@ -1,7 +1,7 @@
 import { generateText, stepCountIs } from "ai";
 import { memoryAgentConfig } from "../../lib/config.js";
 import { memoryTools } from "./tools.js";
-import { buildSystemPrompt } from "./systemPrompt.js";
+import { buildSystemPrompt } from "./prompts.js";
 import { buildFiletree } from "../../lib/filesystem/buildFiletree.js";
 
 const AGENT_NAME = "memory-agent";

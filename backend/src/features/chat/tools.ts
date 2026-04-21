@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { getFilesystem } from "../../lib/filesystem/index.js";
 import { formatToolResult } from "../../lib/utils/formatting.js";
-import { runMemoryAgent } from "../memory-agent/index.js";
+import { runMemoryAgent } from "../../agents/memory-agent/index.js";
 
 const AGENT_NAME = "main-agent";
 
