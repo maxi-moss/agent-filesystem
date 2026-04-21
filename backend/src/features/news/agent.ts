@@ -1,18 +1,37 @@
 import { generateText, stepCountIs } from "ai";
 import { newsAgentConfig } from "../../lib/config.js";
 import { buildFiletree } from "../../lib/filesystem/buildFiletree.js";
-import { buildSystemPrompt } from "./systemPrompt.js";
+import {
+  buildGeneralDiscoveryPrompt,
+  buildSystemPrompt,
+  buildTopicDiscoveryPrompt,
+} from "./prompts.js";
 import { newsTools } from "./tools.js";
 
 const AGENT_NAME = "news-agent";
-const DEFAULT_PROMPT =
-  "Discover today's most important news and store the key items under /news/.";
 
-export function runNewsAgent(topic?: string): void {
+/**
+ * Run the news agent in daily-discovery mode: surface the day's most important
+ * stories across all categories and persist them to /news/. Intended for
+ * scheduled or general runs (e.g. once per morning).
+ */
+export function runNewsAgentForDaily(): void {
+  invokeNewsAgent(buildGeneralDiscoveryPrompt());
+}
+
+/**
+ * Run the news agent in topic-discovery mode: surface today's most important
+ * stories about `topic` and persist them to /news/. Intended for ad-hoc,
+ * subject-specific runs (e.g. "OpenAI", "EU AI Act").
+ */
+export function runNewsAgentForTopic(topic: string): void {
+  invokeNewsAgent(buildTopicDiscoveryPrompt(topic));
+}
+
+function invokeNewsAgent(userMessage: string): void {
   const filetree = buildFiletree(AGENT_NAME);
   const today = new Date().toISOString().slice(0, 10);
   const system = buildSystemPrompt(filetree, today);
-  const userMessage = topic ? `${DEFAULT_PROMPT} Focus on: ${topic}.` : DEFAULT_PROMPT;
 
   generateText({
     model: newsAgentConfig.model,

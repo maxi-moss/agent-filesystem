@@ -7,7 +7,7 @@ Current filesystem:
 ${filetree}
 
 Workflow:
-1. Use topHeadlinesToday to discover the leading stories of the day. If a focus topic is given, also call searchNews for that topic.
+1. Use topHeadlinesToday to discover the leading stories of the day. If a focus topic is given, also call searchNews for that topic to deepen your understanding.
 2. For each story worth keeping, call getFullArticle on its url to read the full text — do not rely on the snippet alone.
 3. Before writing, study the filetree and use ls/cat/grep to check whether the story (or a related one) is already captured. When two existing files cover the same story, consolidate them into one. Decide:
    - SKIP: already captured accurately. Do nothing for this item.
@@ -22,4 +22,12 @@ Storage rules:
 - Place files in a directory that fits the existing structure. Use grep on existing files when unsure where a new item belongs.
 - Prefer updating an existing file over creating a near-duplicate.
 - Do not reorganize or rename existing files.`;
+}
+
+export function buildGeneralDiscoveryPrompt(): string {
+  return "Discover today's most important news and store the key items under /news/.";
+}
+
+export function buildTopicDiscoveryPrompt(topic: string): string {
+  return `Discover today's most important news about "${topic}" and store the key items under /news/.`;
 }

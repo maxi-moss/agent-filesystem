@@ -1,2 +1,2 @@
-export { runNewsAgent } from "./agent.js";
+export { runNewsAgentForDaily, runNewsAgentForTopic } from "./agent.js";
 export { newsRoutes } from "./routes.js";
