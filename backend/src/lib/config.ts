@@ -10,6 +10,8 @@ const envSchema = z.object({
   MAIN_AGENT_MODEL: z.string().default("gpt-4.1-mini"),
   MEMORY_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(15),
   MEMORY_AGENT_MODEL: z.string().default("gpt-4.1-mini"),
+  NEWS_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(20),
+  NEWS_AGENT_MODEL: z.string().default("gpt-4.1-mini"),
   NEWS_HEADLINES_MAX: z.coerce.number().int().positive().default(10),
   NEWS_SEARCH_MAX: z.coerce.number().int().positive().default(10),
   OPENAI_API_KEY: z.string().min(1).optional(),
@@ -47,6 +49,11 @@ export const memoryAgentConfig: { model: LanguageModel; maxSteps: number } = {
   maxSteps: env.MEMORY_AGENT_MAX_STEPS,
 };
 
+export const newsAgentConfig: { model: LanguageModel; maxSteps: number } = {
+  model: openai(env.NEWS_AGENT_MODEL),
+  maxSteps: env.NEWS_AGENT_MAX_STEPS,
+};
+
 export const summarizerConfig: { model: LanguageModel; dir: string } = {
   model: openai(env.SUMMARIZER_MODEL),
   dir: env.SUMMARY_DIR,
@@ -67,4 +74,5 @@ export const agentAccess: Record<string, readonly string[]> = {
   "all": ["/global/", "/memories/", "/news/", "/notes/", "/summaries/"],
   "main-agent": ["/global/", "/memories/", "/news/", "/notes/", "/summaries/"],
   "memory-agent": ["/memories/", "/news/"],
+  "news-agent": ["/news/"],
 };
