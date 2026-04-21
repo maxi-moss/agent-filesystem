@@ -53,6 +53,16 @@ export function formatToolResult(fn: () => string): ToolResult {
   }
 }
 
+export async function formatAsyncToolResult(
+  fn: () => Promise<string>,
+): Promise<ToolResult> {
+  try {
+    return { ok: true, output: await fn() };
+  } catch (error) {
+    return { ok: false, error: (error as Error).message };
+  }
+}
+
 function formatToolOutput(output: ToolOutput): string {
   if (output.type === "execution-denied") {
     return `execution denied${output.reason ? `: ${output.reason}` : ""}`;
