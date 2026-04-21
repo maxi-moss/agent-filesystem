@@ -20,6 +20,7 @@ import {
   GNewsApiError,
   GNewsConfigError,
 } from "./errors.js";
+import { newsTools } from "./tools.js";
 
 const emptyGNewsBody: GNewsResponse = { totalArticles: 0, articles: [] };
 
@@ -201,5 +202,25 @@ describe("fetchArticleContent", () => {
     await expect(fetchArticleContent("https://example.com/article")).rejects.toBeInstanceOf(
       ArticleExtractionError,
     );
+  });
+});
+
+describe("newsTools", () => {
+  it("exposes the filesystem and news-fetching tools", () => {
+    expect(Object.keys(newsTools).sort()).toEqual([
+      "cat",
+      "getFullArticle",
+      "grep",
+      "ls",
+      "searchNews",
+      "topHeadlinesToday",
+      "write",
+    ]);
+  });
+
+  it("does not expose write-adjacent navigation tools the agent shouldn't need", () => {
+    const keys = Object.keys(newsTools);
+    expect(keys).not.toContain("cd");
+    expect(keys).not.toContain("find");
   });
 });
