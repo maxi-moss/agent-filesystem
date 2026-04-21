@@ -1,4 +1,4 @@
-import { getFilesystem, resolveAgentAccess, isInNamespaces } from "../../lib/filesystem/index.js";
+import { getFilesystem, resolveAgentAccess, isInNamespaces } from "./index.js";
 
 interface TreeNode {
   children: Map<string, TreeNode>;
