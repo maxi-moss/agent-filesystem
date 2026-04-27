@@ -1,10 +1,10 @@
 import {
   getFilesystem,
-  ensureTrailingSlash,
   resolveAgentAccess,
   isInNamespaces,
 } from "../../lib/filesystem/index.js";
 import type { FileRow } from "../../lib/filesystem/index.js";
+import { ensureTrailingSlash } from "../../lib/commands/index.js";
 
 export function getFile(path: string, accessScope: string): FileRow | null {
   const row = getFilesystem().getRow(path);

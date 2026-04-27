@@ -3,9 +3,10 @@ import { stdin, stdout } from "node:process";
 import type { ModelMessage } from "ai";
 import { dbConfig, summarizerConfig } from "./lib/config.js";
 import { createFilesystem, getFilesystem } from "./lib/filesystem/index.js";
+import { createCommands } from "./lib/commands/index.js";
 import { runMainAgent, summarizeConversation } from "./features/chat/index.js";
 
-createFilesystem(dbConfig.path);
+createCommands(createFilesystem(dbConfig.path));
 const messages: ModelMessage[] = [];
 const rl = readline.createInterface({ input: stdin, output: stdout });
 

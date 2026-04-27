@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { getFilesystem } from "../../lib/filesystem/index.js";
+import { getCommands } from "../../lib/commands/index.js";
 import { formatToolResult } from "../../lib/utils/formatting.js";
 import { runMemoryAgent } from "../../agents/memory-agent/index.js";
 
@@ -10,7 +10,7 @@ export const fsTools = {
   cat: tool({
     description: "Read the contents of a file at PATH.",
     inputSchema: z.object({ path: z.string() }),
-    execute: ({ path }) => formatToolResult(() => getFilesystem().cat(path, AGENT_NAME)),
+    execute: ({ path }) => formatToolResult(() => getCommands().cat(path, AGENT_NAME)),
   }),
 
   ls: tool({
@@ -18,34 +18,34 @@ export const fsTools = {
     inputSchema: z.object({ path: z.string().optional() }),
     execute: ({ path }) =>
       formatToolResult(() => {
-        const fs = getFilesystem();
-        return fs.ls(path ?? fs.getCwd(), AGENT_NAME);
+        const commands = getCommands();
+        return commands.ls(path ?? commands.getCwd(), AGENT_NAME);
       }),
   }),
 
   cd: tool({
     description: "Change the current working directory.",
     inputSchema: z.object({ path: z.string() }),
-    execute: ({ path }) => formatToolResult(() => getFilesystem().cd(path, AGENT_NAME)),
+    execute: ({ path }) => formatToolResult(() => getCommands().cd(path, AGENT_NAME)),
   }),
 
   grep: tool({
     description: 'Search file contents. args mirror "grep [-i] [-l] PATTERN [PATH]".',
     inputSchema: z.object({ args: z.array(z.string()) }),
-    execute: ({ args }) => formatToolResult(() => getFilesystem().grep(args, AGENT_NAME)),
+    execute: ({ args }) => formatToolResult(() => getCommands().grep(args, AGENT_NAME)),
   }),
 
   find: tool({
     description: 'Find files by name. args mirror "find PATH [-name PATTERN]".',
     inputSchema: z.object({ args: z.array(z.string()) }),
-    execute: ({ args }) => formatToolResult(() => getFilesystem().find(args, AGENT_NAME)),
+    execute: ({ args }) => formatToolResult(() => getCommands().find(args, AGENT_NAME)),
   }),
 
   write: tool({
     description: "Create or overwrite a file at PATH with CONTENT.",
     inputSchema: z.object({ path: z.string(), content: z.string() }),
     execute: ({ path, content }) =>
-      formatToolResult(() => getFilesystem().write(path, content, AGENT_NAME)),
+      formatToolResult(() => getCommands().write(path, content, AGENT_NAME)),
   }),
 
   memorize: tool({

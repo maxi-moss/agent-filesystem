@@ -4,11 +4,12 @@ import { cors } from "hono/cors";
 import { dbConfig } from "./lib/config.js";
 import { AppError } from "./lib/errors.js";
 import { createFilesystem } from "./lib/filesystem/index.js";
+import { createCommands } from "./lib/commands/index.js";
 import { chatRoutes } from "./features/chat/index.js";
 import { filesRoutes } from "./features/files/index.js";
 import { newsRoutes } from "./features/news/index.js";
 
-createFilesystem(dbConfig.path);
+createCommands(createFilesystem(dbConfig.path));
 
 const app = new Hono();
 
