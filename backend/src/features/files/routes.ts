@@ -3,18 +3,18 @@ import { streamSSE } from "hono/streaming";
 import { getFilesystem } from "../../lib/filesystem/index.js";
 import type { FsChangeEvent } from "../../lib/filesystem/index.js";
 import { ValidationError } from "../../lib/errors.js";
-import { agentAccess } from "../../lib/config.js";
+import { accessScopes } from "../../lib/config.js";
 import { FileNotFoundError } from "./errors.js";
 import { getFile, listDirectory } from "./service.js";
 
 export const filesRoutes = new Hono();
 
 filesRoutes.get("/access-scopes", (context) => {
-  const accessScopes = Object.entries(agentAccess).map(([name, namespaces]) => ({
+  const scopes = Object.entries(accessScopes).map(([name, namespaces]) => ({
     name,
     namespaces,
   }));
-  return context.json(accessScopes);
+  return context.json(scopes);
 });
 
 filesRoutes.get("/", (context) => {

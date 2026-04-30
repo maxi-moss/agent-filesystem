@@ -1,1 +1,1 @@
-export { runMemoryAgent } from "./agent.js";
+export { memoryAgent, runMemoryAgent } from "./agent.js";

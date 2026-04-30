@@ -1,4 +1,4 @@
-import { agentAccess } from "../config.js";
+import { accessScopes } from "../config.js";
 
 /** Extract a path's namespace (top-level directory). */
 function resolveNamespace(path: string): string {
@@ -14,7 +14,7 @@ function resolveNamespace(path: string): string {
  * registered in the access table.
  */
 export function resolveAgentAccess(agent: string): readonly string[] {
-  const access = agentAccess[agent];
+  const access = accessScopes[agent];
   if (!access) {
     throw new Error(`${agent}: agent does not exist in access table`);
   }
@@ -35,7 +35,7 @@ export function isInNamespaces(
 
 /**
  * Check that a path is accessible to an agent, throwing an error if not.
- * This should be called at the beginning of all filesystem commands that 
+ * This should be called at the beginning of all filesystem commands that
  * operate on a specific path.
  */
 export function assertAccessible(path: string, agent: string): void {

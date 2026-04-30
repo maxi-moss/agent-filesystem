@@ -65,14 +65,23 @@ export const newsConfig = {
   headlinesMax: env.NEWS_HEADLINES_MAX,
 } as const;
 
-/**
- * Namespaces each agent is allowed to see. When an agent calls a discovery
- * tool (e.g. `ls`), output is filtered to only include files under these
- * namespaces. Agents not listed here have no access.
- */
-export const agentAccess: Record<string, readonly string[]> = {
-  "all": ["/global/", "/memories/", "/news/", "/notes/", "/summaries/"],
+const agentNamespaces = {
   "main-agent": ["/global/", "/memories/", "/news/", "/notes/", "/summaries/"],
   "memory-agent": ["/memories/", "/news/"],
   "news-agent": ["/news/"],
+} as const satisfies Record<string, readonly string[]>;
+
+export type AgentName = keyof typeof agentNamespaces;
+
+export const namespacesFor = (agent: AgentName): readonly string[] =>
+  agentNamespaces[agent];
+
+/**
+ * Permission table indexed by access-scope name. "all" is a synthetic scope
+ * (union of every agent's namespaces) used by the file-browser UI; every
+ * other key is an agent name.
+ */
+export const accessScopes: Record<string, readonly string[]> = {
+  ...agentNamespaces,
+  all: [...new Set(Object.values(agentNamespaces).flat())].sort(),
 };

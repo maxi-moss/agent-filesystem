@@ -1,5 +1,6 @@
-import { generateText, stepCountIs } from "ai";
-import { newsAgentConfig } from "../../lib/config.js";
+import { newsAgentConfig, namespacesFor } from "../../lib/config.js";
+import type { Agent } from "../../lib/agents/index.js";
+import { runAgentInBackground } from "../../lib/agents/index.js";
 import { buildFiletree } from "../../lib/filesystem/buildFiletree.js";
 import {
   buildGeneralDiscoveryPrompt,
@@ -10,13 +11,25 @@ import { newsTools } from "./tools.js";
 
 const AGENT_NAME = "news-agent";
 
+export const newsAgent = {
+  name: AGENT_NAME,
+  model: newsAgentConfig.model,
+  maxSteps: newsAgentConfig.maxSteps,
+  namespaces: namespacesFor(AGENT_NAME),
+  tools: newsTools,
+  buildSystem: () =>
+    buildSystemPrompt(buildFiletree(AGENT_NAME), todayIso()),
+} satisfies Agent;
+
 /**
  * Run the news agent in daily-discovery mode: surface the day's most important
  * stories across all categories and persist them to /news/. Intended for
  * scheduled or general runs (e.g. once per morning).
  */
 export function runNewsAgentForDaily(): void {
-  invokeNewsAgent(buildGeneralDiscoveryPrompt());
+  runAgentInBackground(newsAgent, [
+    { role: "user", content: buildGeneralDiscoveryPrompt() },
+  ]);
 }
 
 /**
@@ -25,19 +38,11 @@ export function runNewsAgentForDaily(): void {
  * subject-specific runs (e.g. "OpenAI", "EU AI Act").
  */
 export function runNewsAgentForTopic(topic: string): void {
-  invokeNewsAgent(buildTopicDiscoveryPrompt(topic));
+  runAgentInBackground(newsAgent, [
+    { role: "user", content: buildTopicDiscoveryPrompt(topic) },
+  ]);
 }
 
-function invokeNewsAgent(userMessage: string): void {
-  const filetree = buildFiletree(AGENT_NAME);
-  const today = new Date().toISOString().slice(0, 10);
-  const system = buildSystemPrompt(filetree, today);
-
-  generateText({
-    model: newsAgentConfig.model,
-    system,
-    messages: [{ role: "user", content: userMessage }],
-    tools: newsTools,
-    stopWhen: stepCountIs(newsAgentConfig.maxSteps),
-  }).catch((err) => console.error("[news-agent]", err));
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
 }

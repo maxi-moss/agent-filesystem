@@ -1,17 +1,12 @@
-import { streamText, generateText, stepCountIs, type ModelMessage } from "ai";
-import { mainAgentConfig, summarizerConfig } from "../../lib/config.js";
+import { generateText, type ModelMessage } from "ai";
+import { summarizerConfig } from "../../lib/config.js";
+import { runAgent } from "../../lib/agents/index.js";
 import { formatConversationForSummary } from "../../lib/utils/formatting.js";
-import { fsTools } from "./tools.js";
-import { MAIN_AGENT_PROMPT, SUMMARIZER_PROMPT } from "./prompts.js";
+import { mainAgent } from "./agent.js";
+import { SUMMARIZER_PROMPT } from "./prompts.js";
 
 export function runMainAgent(messages: ModelMessage[]) {
-  return streamText({
-    model: mainAgentConfig.model,
-    system: MAIN_AGENT_PROMPT,
-    messages,
-    tools: fsTools,
-    stopWhen: stepCountIs(mainAgentConfig.maxSteps),
-  });
+  return runAgent(mainAgent, messages);
 }
 
 /** Generate a summary of a conversation for long-term storage. */

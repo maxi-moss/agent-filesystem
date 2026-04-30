@@ -1,20 +1,21 @@
-import { generateText, stepCountIs } from "ai";
-import { memoryAgentConfig } from "../../lib/config.js";
-import { memoryTools } from "./tools.js";
-import { buildSystemPrompt } from "./prompts.js";
+import { memoryAgentConfig, namespacesFor } from "../../lib/config.js";
+import type { Agent } from "../../lib/agents/index.js";
+import { runAgentInBackground } from "../../lib/agents/index.js";
 import { buildFiletree } from "../../lib/filesystem/buildFiletree.js";
+import { buildSystemPrompt } from "./prompts.js";
+import { memoryTools } from "./tools.js";
 
 const AGENT_NAME = "memory-agent";
 
-export function runMemoryAgent(info: string): void {
-  const filetree = buildFiletree(AGENT_NAME);
-  const system = buildSystemPrompt(filetree);
+export const memoryAgent = {
+  name: AGENT_NAME,
+  model: memoryAgentConfig.model,
+  maxSteps: memoryAgentConfig.maxSteps,
+  namespaces: namespacesFor(AGENT_NAME),
+  tools: memoryTools,
+  buildSystem: () => buildSystemPrompt(buildFiletree(AGENT_NAME)),
+} satisfies Agent;
 
-  generateText({
-    model: memoryAgentConfig.model,
-    system,
-    messages: [{ role: "user", content: info }],
-    tools: memoryTools,
-    stopWhen: stepCountIs(memoryAgentConfig.maxSteps),
-  }).catch((err) => console.error("[memory-agent]", err));
+export function runMemoryAgent(info: string): void {
+  runAgentInBackground(memoryAgent, [{ role: "user", content: info }]);
 }
