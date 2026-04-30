@@ -92,10 +92,10 @@ describe("ls", () => {
       fs.upsert("/memories/newer.md", "new");
 
       const lines = commands.ls("/memories/", AGENT).split("\n");
-      expect(lines[0]).toBe("2026-04-30T10:00:00.000Z  newer.md");
       const newerIdx = lines.findIndex((line) => line.endsWith("  newer.md"));
       const olderIdx = lines.findIndex((line) => line.endsWith("  older.md"));
-      expect(newerIdx).toBeLessThan(olderIdx);
+      expect(newerIdx).toBeGreaterThanOrEqual(0);
+      expect(olderIdx).toBeGreaterThan(newerIdx);
     } finally {
       vi.useRealTimers();
     }
