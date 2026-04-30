@@ -5,6 +5,17 @@ import { formatToolResult } from "../../lib/utils/formatting.js";
 
 const AGENT_NAME = "memory-agent";
 
+const grepSchema = z.object({
+  pattern: z.string(),
+  path: z.string().optional(),
+  "-i": z.boolean().optional(),
+  "-A": z.number().int().nonnegative().optional(),
+  "-B": z.number().int().nonnegative().optional(),
+  "-C": z.number().int().nonnegative().optional(),
+  output_mode: z.enum(["content", "files_with_matches", "count"]).optional(),
+  head_limit: z.number().int().positive().optional(),
+});
+
 export const memoryTools = {
   cat: tool({
     description: "Read the contents of a file at PATH (absolute path).",
@@ -14,9 +25,9 @@ export const memoryTools = {
 
   grep: tool({
     description:
-      'Search file contents. args mirror "grep [-i] [-l] PATTERN [PATH]". Always use absolute paths.',
-    inputSchema: z.object({ args: z.array(z.string()) }),
-    execute: ({ args }) => formatToolResult(() => getCommands().grep(args, AGENT_NAME)),
+      "Search file contents for PATTERN under PATH (absolute path). Returns matched lines as `path:line:content`. Set `-i` for case-insensitive search. `-A`/`-B`/`-C` add N lines of after/before/around context. `output_mode` can be `content` (default), `files_with_matches`, or `count`. `head_limit` caps output lines.",
+    inputSchema: grepSchema,
+    execute: (opts) => formatToolResult(() => getCommands().grep(opts, AGENT_NAME)),
   }),
 
   write: tool({

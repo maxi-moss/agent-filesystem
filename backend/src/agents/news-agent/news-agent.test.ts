@@ -5,6 +5,7 @@ describe("newsTools", () => {
   it("exposes the filesystem and news-fetching tools", () => {
     expect(Object.keys(newsTools).sort()).toEqual([
       "cat",
+      "find",
       "getFullArticle",
       "grep",
       "ls",
@@ -17,6 +18,5 @@ describe("newsTools", () => {
   it("does not expose navigation tools the agent shouldn't need", () => {
     const keys = Object.keys(newsTools);
     expect(keys).not.toContain("cd");
-    expect(keys).not.toContain("find");
   });
 });
