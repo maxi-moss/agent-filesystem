@@ -2,10 +2,13 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { newsConfig } from "../../lib/config.js";
 import {
+  runNewsAgentForDaily,
+  runNewsAgentForTopic,
+} from "../../agents/news-agent/index.js";
+import {
   ArticleExtractionError,
   ArticleFetchError,
   GNewsApiError,
-  GNewsConfigError,
 } from "./errors.js";
 
 const GNEWS_BASE_URL = "https://gnews.io/api/v4";
@@ -44,8 +47,7 @@ export type TopHeadlinesParams = {
 
 /** Search news articles matching the query filters. */
 export async function searchNews(params: SearchNewsParams): Promise<GNewsResponse> {
-  const apiKey = requireApiKey();
-  const url = buildGNewsUrl("/search", apiKey, {
+  const url = buildGNewsUrl("/search", newsConfig.apiKey, {
     q: params.q,
     country: params.country,
     from: params.from,
@@ -57,8 +59,7 @@ export async function searchNews(params: SearchNewsParams): Promise<GNewsRespons
 
 /** Fetch the current top headlines matching the given filters. */
 export async function getTopHeadlines(params: TopHeadlinesParams): Promise<GNewsResponse> {
-  const apiKey = requireApiKey();
-  const url = buildGNewsUrl("/top-headlines", apiKey, {
+  const url = buildGNewsUrl("/top-headlines", newsConfig.apiKey, {
     q: params.q,
     category: params.category,
     country: params.country,
@@ -86,11 +87,13 @@ export async function fetchArticleContent(articleUrl: string): Promise<{ textCon
   return { textContent: articleContent.textContent };
 }
 
-function requireApiKey(): string {
-  if (!newsConfig.apiKey) {
-    throw new GNewsConfigError("GNEWS_API_KEY is not configured");
+/** Fire-and-forget dispatch to the news-agent. Topic-less runs do daily discovery. */
+export function triggerNewsAgent({ topic }: { topic?: string }): void {
+  if (topic) {
+    runNewsAgentForTopic(topic);
+    return;
   }
-  return newsConfig.apiKey;
+  runNewsAgentForDaily();
 }
 
 function buildGNewsUrl(

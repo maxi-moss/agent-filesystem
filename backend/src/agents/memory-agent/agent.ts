@@ -1,4 +1,5 @@
-import { memoryAgentConfig, namespacesFor } from "../../lib/config.js";
+import { memoryAgentConfig } from "../../lib/config.js";
+import { namespacesFor } from "../../lib/filesystem/namespaces.js";
 import type { Agent } from "../../lib/agents/index.js";
 import { runAgentInBackground } from "../../lib/agents/index.js";
 import { buildFiletree } from "../../lib/filesystem/buildFiletree.js";

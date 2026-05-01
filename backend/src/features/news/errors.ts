@@ -1,11 +1,6 @@
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { AppError } from "../../lib/errors.js";
 
-export class GNewsConfigError extends AppError {
-  readonly code = "news/config_missing";
-  readonly status: ContentfulStatusCode = 500;
-}
-
 export class GNewsApiError extends AppError {
   readonly code = "news/gnews_failed";
   readonly status: ContentfulStatusCode = 502;

@@ -5,18 +5,18 @@ import { z } from "zod";
 const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   DB_PATH: z.string().default("./memory-store.db"),
-  GNEWS_API_KEY: z.string().min(1).optional(),
+  GNEWS_API_KEY: z.string().min(1),
   MAIN_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(10),
-  MAIN_AGENT_MODEL: z.string().default("gpt-4.1-mini"),
+  MAIN_AGENT_MODEL: z.string().default("gpt-5-nano"),
   MEMORY_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(15),
-  MEMORY_AGENT_MODEL: z.string().default("gpt-4.1-mini"),
+  MEMORY_AGENT_MODEL: z.string().default("gpt-5-nano"),
   NEWS_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(20),
-  NEWS_AGENT_MODEL: z.string().default("gpt-4.1-mini"),
+  NEWS_AGENT_MODEL: z.string().default("gpt-5-nano"),
   NEWS_HEADLINES_MAX: z.coerce.number().int().positive().default(10),
   NEWS_SEARCH_MAX: z.coerce.number().int().positive().default(10),
   OPENAI_API_KEY: z.string().min(1).optional(),
-  SUMMARIZER_MODEL: z.string().default("gpt-4.1-mini"),
-  SUMMARY_DIR: z.string().default("/summaries")
+  SUMMARIZER_MODEL: z.string().default("gpt-5-nano"),
+  SUMMARY_DIR: z.string().default("/summaries"),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -32,7 +32,7 @@ const openai = createOpenAI({
 
 export const apiKeyConfig = {
   anthropic: env.ANTHROPIC_API_KEY,
-  openai: env.OPENAI_API_KEY
+  openai: env.OPENAI_API_KEY,
 } as const;
 
 export const dbConfig = {
@@ -65,23 +65,6 @@ export const newsConfig = {
   headlinesMax: env.NEWS_HEADLINES_MAX,
 } as const;
 
-const agentNamespaces = {
-  "main-agent": ["/global/", "/memories/", "/news/", "/notes/", "/summaries/"],
-  "memory-agent": ["/memories/", "/news/"],
-  "news-agent": ["/news/"],
-} as const satisfies Record<string, readonly string[]>;
-
-export type AgentName = keyof typeof agentNamespaces;
-
-export const namespacesFor = (agent: AgentName): readonly string[] =>
-  agentNamespaces[agent];
-
-/**
- * Permission table indexed by access-scope name. "all" is a synthetic scope
- * (union of every agent's namespaces) used by the file-browser UI; every
- * other key is an agent name.
- */
-export const accessScopes: Record<string, readonly string[]> = {
-  ...agentNamespaces,
-  all: [...new Set(Object.values(agentNamespaces).flat())].sort(),
+export const scheduleFlags: Record<string, boolean> = {
+  "news-daily": true,
 };

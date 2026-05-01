@@ -2,9 +2,13 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   config: {
-    apiKey: "test-key" as string | undefined,
+    apiKey: "test-key",
     searchMax: 10,
     headlinesMax: 5,
+  },
+  newsAgent: {
+    runDaily: vi.fn(),
+    runTopic: vi.fn(),
   },
 }));
 
@@ -12,13 +16,22 @@ vi.mock("../../lib/config.js", () => ({
   newsConfig: mocks.config,
 }));
 
-import { fetchArticleContent, getTopHeadlines, searchNews } from "./service.js";
+vi.mock("../../agents/news-agent/index.js", () => ({
+  runNewsAgentForDaily: mocks.newsAgent.runDaily,
+  runNewsAgentForTopic: mocks.newsAgent.runTopic,
+}));
+
+import {
+  fetchArticleContent,
+  getTopHeadlines,
+  searchNews,
+  triggerNewsAgent,
+} from "./service.js";
 import type { GNewsResponse } from "./service.js";
 import {
   ArticleExtractionError,
   ArticleFetchError,
   GNewsApiError,
-  GNewsConfigError,
 } from "./errors.js";
 
 const emptyGNewsBody: GNewsResponse = { totalArticles: 0, articles: [] };
@@ -43,9 +56,8 @@ function articleHtml(paragraph: string): string {
 }
 
 beforeEach(() => {
-  mocks.config.apiKey = "test-key";
-  mocks.config.searchMax = 10;
-  mocks.config.headlinesMax = 5;
+  mocks.newsAgent.runDaily.mockReset();
+  mocks.newsAgent.runTopic.mockReset();
   vi.unstubAllGlobals();
 });
 
@@ -111,13 +123,6 @@ describe("searchNews", () => {
     expect(result).toEqual(body);
   });
 
-  it("throws GNewsConfigError when GNEWS_API_KEY is not configured", async () => {
-    mocks.config.apiKey = undefined;
-    vi.stubGlobal("fetch", vi.fn());
-
-    await expect(searchNews({ q: "anything" })).rejects.toBeInstanceOf(GNewsConfigError);
-  });
-
   it("throws GNewsApiError when the upstream response is not ok", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ errors: ["bad"] }, 500)));
 
@@ -137,13 +142,6 @@ describe("getTopHeadlines", () => {
     expect(requestedUrl.searchParams.get("category")).toBe("technology");
     expect(requestedUrl.searchParams.get("country")).toBe("gb");
     expect(requestedUrl.searchParams.get("max")).toBe("5");
-  });
-
-  it("throws GNewsConfigError when GNEWS_API_KEY is not configured", async () => {
-    mocks.config.apiKey = undefined;
-    vi.stubGlobal("fetch", vi.fn());
-
-    await expect(getTopHeadlines({})).rejects.toBeInstanceOf(GNewsConfigError);
   });
 
   it("throws GNewsApiError when the upstream response is not ok", async () => {
@@ -201,5 +199,22 @@ describe("fetchArticleContent", () => {
     await expect(fetchArticleContent("https://example.com/article")).rejects.toBeInstanceOf(
       ArticleExtractionError,
     );
+  });
+});
+
+describe("triggerNewsAgent", () => {
+  it("dispatches to the daily run when no topic is provided", () => {
+    triggerNewsAgent({});
+
+    expect(mocks.newsAgent.runDaily).toHaveBeenCalledOnce();
+    expect(mocks.newsAgent.runTopic).not.toHaveBeenCalled();
+  });
+
+  it("dispatches to the topic run when a topic is provided", () => {
+    triggerNewsAgent({ topic: "sudan" });
+
+    expect(mocks.newsAgent.runTopic).toHaveBeenCalledOnce();
+    expect(mocks.newsAgent.runTopic).toHaveBeenCalledWith("sudan");
+    expect(mocks.newsAgent.runDaily).not.toHaveBeenCalled();
   });
 });

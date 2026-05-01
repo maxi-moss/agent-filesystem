@@ -1,15 +1,18 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { dbConfig } from "./lib/config.js";
+import { dbConfig, scheduleFlags } from "./lib/config.js";
 import { AppError } from "./lib/errors.js";
 import { createFilesystem } from "./lib/filesystem/index.js";
 import { createCommands } from "./lib/commands/index.js";
+import { startSchedules } from "./lib/scheduler.js";
 import { chatRoutes } from "./features/chat/index.js";
 import { filesRoutes } from "./features/files/index.js";
 import { newsRoutes } from "./features/news/index.js";
+import { newsSchedule } from "./features/news/schedule.js";
 
 createCommands(createFilesystem(dbConfig.path));
+startSchedules([newsSchedule], scheduleFlags);
 
 const app = new Hono();
 

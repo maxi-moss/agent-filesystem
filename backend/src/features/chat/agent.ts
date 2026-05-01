@@ -1,4 +1,5 @@
-import { mainAgentConfig, namespacesFor } from "../../lib/config.js";
+import { mainAgentConfig } from "../../lib/config.js";
+import { namespacesFor } from "../../lib/filesystem/namespaces.js";
 import type { Agent } from "../../lib/agents/index.js";
 import { MAIN_AGENT_PROMPT } from "./prompts.js";
 import { fsTools } from "./tools.js";
