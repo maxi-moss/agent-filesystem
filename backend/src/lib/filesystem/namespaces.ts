@@ -1,7 +1,8 @@
 const agentNamespaces = {
-  "main-agent": ["/global/", "/memories/", "/news/", "/notes/", "/summaries/"],
+  "main-agent": ["/global/", "/jira/", "/memories/", "/news/", "/notes/", "/summaries/"],
   "memory-agent": ["/memories/", "/news/"],
   "news-agent": ["/news/"],
+  "jira-webhook": ["/jira/"],
 } as const satisfies Record<string, readonly string[]>;
 
 export type AgentName = keyof typeof agentNamespaces;

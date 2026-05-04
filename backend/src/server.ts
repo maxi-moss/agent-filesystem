@@ -8,6 +8,7 @@ import { createCommands } from "./lib/commands/index.js";
 import { startSchedules } from "./lib/scheduler.js";
 import { chatRoutes } from "./features/chat/index.js";
 import { filesRoutes } from "./features/files/index.js";
+import { jiraRoutes } from "./features/jira/index.js";
 import { newsRoutes } from "./features/news/index.js";
 import { newsSchedule } from "./features/news/schedule.js";
 
@@ -20,6 +21,7 @@ app.use("/api/*", cors({ origin: "http://localhost:5173" }));
 app.route("/api/chat", chatRoutes);
 app.route("/api/files", filesRoutes);
 app.route("/api/news", newsRoutes);
+app.route("/webhooks/jira", jiraRoutes);
 
 app.onError((error, context) => {
   if (error instanceof AppError) {

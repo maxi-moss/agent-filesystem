@@ -6,6 +6,9 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   DB_PATH: z.string().default("./memory-store.db"),
   GNEWS_API_KEY: z.string().min(1),
+  JIRA_ASSIGNEE_ACCOUNT_ID: z.string().min(1).optional(),
+  JIRA_BASE_URL: z.url().optional(),
+  JIRA_WEBHOOK_SECRET: z.string().min(1).optional(),
   MAIN_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(10),
   MAIN_AGENT_MODEL: z.string().default("gpt-5-nano"),
   MEMORY_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(15),
@@ -63,6 +66,12 @@ export const newsConfig = {
   apiKey: env.GNEWS_API_KEY,
   searchMax: env.NEWS_SEARCH_MAX,
   headlinesMax: env.NEWS_HEADLINES_MAX,
+} as const;
+
+export const jiraConfig = {
+  assigneeAccountId: env.JIRA_ASSIGNEE_ACCOUNT_ID,
+  baseUrl: env.JIRA_BASE_URL,
+  webhookSecret: env.JIRA_WEBHOOK_SECRET,
 } as const;
 
 export const scheduleFlags: Record<string, boolean> = {

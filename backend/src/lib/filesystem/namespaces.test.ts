@@ -5,6 +5,7 @@ describe("resolveAgentAccess", () => {
   it("returns namespaces for a registered agent", () => {
     expect(resolveAgentAccess("main-agent")).toEqual([
       "/global/",
+      "/jira/",
       "/memories/",
       "/news/",
       "/notes/",
