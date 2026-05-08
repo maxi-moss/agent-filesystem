@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { jiraConfig } from "../../lib/config.js";
 import { getCommands } from "../../lib/commands/index.js";
+import { runJiraAgentForIssue } from "../../agents/jira-agent/index.js";
 import { JiraPayloadError, JiraSignatureError } from "./errors.js";
 
 const WRITER_AGENT = "jira-webhook";
@@ -49,6 +50,28 @@ const jiraIssuePayload = z.object({
     .optional(),
 });
 
+const jiraCommentEventPayload = z.object({
+  webhookEvent: z.enum(["comment_created", "comment_updated", "comment_deleted"]),
+  issue: z.object({ key: z.string().min(1) }),
+});
+
+const jiraCommentSchema = z.object({
+  id: z.string(),
+  author: z
+    .object({
+      displayName: z.string().nullish(),
+      accountId: z.string().nullish(),
+    })
+    .nullish(),
+  body: z.unknown().nullish(),
+  created: z.string().nullish(),
+  updated: z.string().nullish(),
+});
+
+const jiraCommentsResponse = z.object({
+  comments: z.array(jiraCommentSchema),
+});
+
 type JiraIssuePayload = z.infer<typeof jiraIssuePayload>;
 type JiraIssue = JiraIssuePayload["issue"];
 
@@ -80,9 +103,32 @@ export function verifyJiraSignature(
 }
 
 /**
+ * Dispatch a verified Jira webhook payload to the appropriate handler based
+ * on its `webhookEvent` discriminator. Unknown events are ignored.
+ */
+export async function handleJiraWebhook(payload: unknown): Promise<void> {
+  if (!isPlainObject(payload)) {
+    throw new JiraPayloadError("malformed Jira webhook payload");
+  }
+  const event = payload["webhookEvent"];
+  if (typeof event !== "string") {
+    throw new JiraPayloadError("malformed Jira webhook payload");
+  }
+  if (event.startsWith("jira:issue_")) {
+    handleJiraIssueEvent(payload);
+    return;
+  }
+  if (event.startsWith("comment_")) {
+    await handleJiraCommentEvent(payload);
+    return;
+  }
+}
+
+/**
  * Process a verified Jira issue webhook payload, writing a markdown file
- * to `/jira/{ISSUE-KEY}.md` when the event represents an assignment to
- * the watched user. Throws `JiraPayloadError` for malformed payloads.
+ * to `/jira/{ISSUE-KEY}/description.md` when the event represents an
+ * assignment to the watched user. Throws `JiraPayloadError` for malformed
+ * payloads.
  */
 export function handleJiraIssueEvent(payload: unknown): void {
   const parsed = jiraIssuePayload.safeParse(payload);
@@ -93,7 +139,69 @@ export function handleJiraIssueEvent(payload: unknown): void {
   if (!shouldWriteFile(event)) return;
 
   const body = renderIssueMarkdown(event.issue, event.webhookEvent);
-  getCommands().write(`/jira/${event.issue.key}.md`, body, WRITER_AGENT);
+  getCommands().write(
+    `/jira/${event.issue.key}/description.md`,
+    body,
+    WRITER_AGENT,
+  );
+}
+
+/**
+ * Process a Jira comment webhook payload by fetching the full current
+ * comment thread from the Jira REST API and handing it to the jira-agent.
+ * The agent owns `comments.md` content. Throws `JiraPayloadError` for
+ * malformed payloads.
+ */
+export async function handleJiraCommentEvent(payload: unknown): Promise<void> {
+  const parsed = jiraCommentEventPayload.safeParse(payload);
+  if (!parsed.success) {
+    throw new JiraPayloadError("malformed Jira webhook payload");
+  }
+  const issueKey = parsed.data.issue.key;
+  const commentThread = await fetchJiraComments(issueKey);
+  runJiraAgentForIssue({ issueKey, commentThread });
+}
+
+/**
+ * Fetch all comments on an issue from the Jira Cloud REST API and flatten
+ * each ADF body to plain text. Throws when auth is unconfigured or when
+ * the API responds with a non-2xx status.
+ */
+async function fetchJiraComments(
+  issueKey: string,
+): Promise<{ author: string; created: string; body: string }[]> {
+  const baseUrl = jiraConfig.baseUrl;
+  const email = jiraConfig.email;
+  const apiToken = jiraConfig.apiToken;
+  if (!baseUrl || !email || !apiToken) {
+    throw new Error(
+      "Jira API auth is not configured (JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN)",
+    );
+  }
+  const url = `${baseUrl.replace(/\/+$/, "")}/rest/api/3/issue/${encodeURIComponent(issueKey)}/comment`;
+  const auth = Buffer.from(`${email}:${apiToken}`, "utf8").toString("base64");
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Basic ${auth}`,
+      Accept: "application/json",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Jira comments fetch failed for ${issueKey}: ${response.status} ${response.statusText}`,
+    );
+  }
+  const json = await response.json();
+  const parsed = jiraCommentsResponse.safeParse(json);
+  if (!parsed.success) {
+    throw new Error(`Jira comments response was malformed for ${issueKey}`);
+  }
+  return parsed.data.comments.map((comment) => ({
+    author:
+      comment.author?.displayName ?? comment.author?.accountId ?? "unknown",
+    created: comment.created ?? "",
+    body: renderDescription(comment.body),
+  }));
 }
 
 function shouldWriteFile(event: JiraIssuePayload): boolean {
@@ -153,4 +261,8 @@ function extractAdfText(node: AdfNode): string {
     return childTexts.join("") + "\n\n";
   }
   return childTexts.join("");
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

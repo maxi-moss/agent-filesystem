@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { JiraPayloadError } from "./errors.js";
-import { handleJiraIssueEvent, verifyJiraSignature } from "./service.js";
+import { handleJiraWebhook, verifyJiraSignature } from "./service.js";
 
 export const jiraRoutes = new Hono();
 
@@ -13,6 +13,6 @@ jiraRoutes.post("/webhook", async (context) => {
   } catch {
     throw new JiraPayloadError("invalid JSON body");
   }
-  handleJiraIssueEvent(payload);
+  await handleJiraWebhook(payload);
   return context.body(null, 204);
 });
