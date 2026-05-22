@@ -22,6 +22,11 @@ const envSchema = z.object({
   NEWS_HEADLINES_MAX: z.coerce.number().int().positive().default(10),
   NEWS_SEARCH_MAX: z.coerce.number().int().positive().default(10),
   OPENAI_API_KEY: z.string().min(1).optional(),
+  SLACK_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(20),
+  SLACK_AGENT_MODEL: z.string().default("gpt-5-nano"),
+  SLACK_BOT_TOKEN: z.string().min(1).optional(),
+  SLACK_BOT_USER_ID: z.string().min(1).optional(),
+  SLACK_SIGNING_SECRET: z.string().min(1).optional(),
   SUMMARIZER_MODEL: z.string().default("gpt-5-nano"),
   SUMMARY_DIR: z.string().default("/summaries"),
 });
@@ -83,6 +88,17 @@ export const jiraConfig = {
 export const jiraAgentConfig: { model: LanguageModel; maxSteps: number } = {
   model: openai(env.JIRA_AGENT_MODEL),
   maxSteps: env.JIRA_AGENT_MAX_STEPS,
+};
+
+export const slackConfig = {
+  signingSecret: env.SLACK_SIGNING_SECRET,
+  botToken: env.SLACK_BOT_TOKEN,
+  botUserId: env.SLACK_BOT_USER_ID,
+} as const;
+
+export const slackAgentConfig: { model: LanguageModel; maxSteps: number } = {
+  model: openai(env.SLACK_AGENT_MODEL),
+  maxSteps: env.SLACK_AGENT_MAX_STEPS,
 };
 
 export const scheduleFlags: Record<string, boolean> = {

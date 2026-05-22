@@ -10,6 +10,7 @@ import { chatRoutes } from "./features/chat/index.js";
 import { filesRoutes } from "./features/files/index.js";
 import { jiraRoutes } from "./features/jira/index.js";
 import { newsRoutes } from "./features/news/index.js";
+import { slackRoutes } from "./features/slack/index.js";
 import { newsSchedule } from "./features/news/schedule.js";
 
 createCommands(createFilesystem(dbConfig.path));
@@ -22,6 +23,7 @@ app.route("/api/chat", chatRoutes);
 app.route("/api/files", filesRoutes);
 app.route("/api/news", newsRoutes);
 app.route("/webhooks/jira", jiraRoutes);
+app.route("/webhooks/slack", slackRoutes);
 
 app.onError((error, context) => {
   if (error instanceof AppError) {

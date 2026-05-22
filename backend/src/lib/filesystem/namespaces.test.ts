@@ -9,6 +9,7 @@ describe("resolveAgentAccess", () => {
       "/memories/",
       "/news/",
       "/notes/",
+      "/slack/",
       "/summaries/",
     ]);
   });
