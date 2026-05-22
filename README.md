@@ -21,7 +21,7 @@ pnpm dev:frontend     # Start frontend
 1. A user sends messages via the REPL or the web frontend.
 2. The main agent has filesystem tools it can call to persist and retrieve information.
 3. All file operations go through a virtual filesystem (SQLite — no real files on disk).
-4. A memory agent runs in the background to deduplicate and organize stored memories.
+4. Background agents keep their own slices of the filesystem curated — a memory agent dedupes and organizes memories, a Jira agent maintains per-ticket comment context, a Slack agent captures thread context on `@`-mention.
 5. On session end, the conversation is summarized and saved for future context.
 
 ## Supported commands
@@ -34,6 +34,17 @@ pnpm dev:frontend     # Start frontend
 | `grep`  | `grep -i "meeting" /notes` | Search file contents (`-i`, `-l` flags) |
 | `find`  | `find / -name "*.md"` | Find files by name pattern |
 | `write` | `write /notes/todo.md "buy milk"` | Create or overwrite a file |
+
+## Integrations
+
+External systems can push context into the filesystem via webhooks:
+
+| Integration | Endpoint | Trigger | What it does |
+|---|---|---|---|
+| Jira | `POST /webhooks/jira/webhook` | Issue create/update + comment events | Writes `/jira/{KEY}/description.md`; a `jira-agent` curates `/jira/{KEY}/comments.md` from the full comment thread. |
+| Slack | `POST /webhooks/slack/events` | `@`-mention in any channel the bot is in | A `slack-agent` reads the thread, persists relevant context across `/slack/`, `/jira/`, `/memories/`, and posts a short prose summary back in-thread. See [`docs/slack-integration.md`](docs/slack-integration.md). |
+
+Both integrations are optional — the project boots without their env vars configured.
 
 ## Scripts
 
@@ -50,13 +61,23 @@ pnpm test:backend   # Run backend tests only
 
 ```
 backend/src/
-├── features/
+├── features/             # HTTP surfaces (routes + service + errors)
 │   ├── chat/             # streaming agent chat + summarize
-│   ├── memory-agent/     # fire-and-forget memory management
-│   └── files/            # file browse + directory listing + SSE
+│   ├── files/            # file browse + directory listing + SSE
+│   ├── jira/             # Jira webhook handler
+│   ├── news/             # news endpoints
+│   └── slack/            # Slack events webhook
+├── agents/               # background workers (agent + tools + prompts)
+│   ├── jira-agent/       # curates /jira/{KEY}/comments.md
+│   ├── memory-agent/     # dedupes and organizes /memories/
+│   ├── news-agent/       # maintains /news/
+│   └── slack-agent/      # curates Slack threads across /slack/, /jira/, /memories/
 ├── lib/
-│   ├── filesystem/       # Filesystem class (SQLite-backed virtual fs)
-│   └── ...               # config, shared utilities
+│   ├── agents/           # shared Agent interface and runner
+│   ├── commands/         # agent-facing filesystem command layer
+│   ├── filesystem/       # SQLite-backed virtual fs + per-agent namespaces
+│   ├── tools/            # shared filesystem tool factories
+│   └── utils/            # formatting helpers
 ├── server.ts             # HTTP API (Hono)
 └── cli.ts                # REPL
 
