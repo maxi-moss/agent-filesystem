@@ -25,7 +25,7 @@ export function createSlackTools(replyContext: ReplyContext) {
     write: filesystemTools.write(AGENT_NAME),
     replyToSlack: tool({
       description:
-        "Post a short prose message back to the Slack thread that invoked you. Call this exactly once, as your final action, summarising what you saved.",
+        "Post a short prose message back to the Slack thread that invoked you. Call this exactly once, as your final action, reporting what you did.",
       inputSchema: z.object({
         text: z
           .string()
