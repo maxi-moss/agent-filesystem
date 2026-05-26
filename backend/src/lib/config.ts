@@ -22,6 +22,8 @@ const envSchema = z.object({
   NEWS_HEADLINES_MAX: z.coerce.number().int().positive().default(10),
   NEWS_SEARCH_MAX: z.coerce.number().int().positive().default(10),
   OPENAI_API_KEY: z.string().min(1).optional(),
+  RETRIEVAL_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(20),
+  RETRIEVAL_AGENT_MODEL: z.string().default("gpt-5-mini"),
   SLACK_AGENT_MAX_STEPS: z.coerce.number().int().positive().default(20),
   SLACK_AGENT_MODEL: z.string().default("gpt-5-nano"),
   SLACK_BOT_TOKEN: z.string().min(1).optional(),
@@ -95,6 +97,11 @@ export const slackConfig = {
   botToken: env.SLACK_BOT_TOKEN,
   botUserId: env.SLACK_BOT_USER_ID,
 } as const;
+
+export const retrievalAgentConfig: { model: LanguageModel; maxSteps: number } = {
+  model: openai(env.RETRIEVAL_AGENT_MODEL),
+  maxSteps: env.RETRIEVAL_AGENT_MAX_STEPS,
+};
 
 export const slackAgentConfig: { model: LanguageModel; maxSteps: number } = {
   model: openai(env.SLACK_AGENT_MODEL),

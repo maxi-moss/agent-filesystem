@@ -6,6 +6,7 @@
   "scripts": {
     "dev:api": "pnpm --filter @agent-filesystem/backend dev:api",
     "dev:backend": "pnpm --filter @agent-filesystem/backend dev",
+    "dev:mcp": "pnpm --filter @agent-filesystem/backend dev:mcp",
     "dev:frontend": "pnpm --filter @agent-filesystem/frontend dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
