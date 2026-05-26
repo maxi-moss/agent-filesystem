@@ -46,11 +46,32 @@ External systems can push context into the filesystem via webhooks:
 
 Both integrations are optional — the project boots without their env vars configured.
 
+## MCP server
+
+An MCP client (Claude Code, Claude Desktop) can pull from the accumulated knowledge without seeing the filesystem itself. The server runs over stdio (`pnpm dev:mcp`) and exposes two tools:
+
+- **`query`** — ask a natural-language question; a read-only retrieval agent reads across the filesystem and returns a synthesized answer ending in a `## Sources` list of the paths it used.
+- **`get_full_file_contents`** — pass exact file paths (typically from a `query` answer's sources) to get their full verbatim contents.
+
+Register it with your client by adding this to your `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "agent-filesystem": {
+      "command": "pnpm",
+      "args": ["--filter", "@agent-filesystem/backend", "dev:mcp"]
+    }
+  }
+}
+```
+
 ## Scripts
 
 ```bash
 pnpm dev:backend    # Run CLI in development mode
 pnpm dev:api        # Start API server
+pnpm dev:mcp        # Start stdio MCP server
 pnpm dev:frontend   # Start frontend dev server
 pnpm build          # Compile TypeScript
 pnpm test           # Run all tests
@@ -59,18 +80,20 @@ pnpm test:backend   # Run backend tests only
 
 ## Architecture
 
-```
+```bash
 backend/src/
 ├── features/             # HTTP surfaces (routes + service + errors)
 │   ├── chat/             # streaming agent chat + summarize
 │   ├── files/            # file browse + directory listing + SSE
 │   ├── jira/             # Jira webhook handler
+│   ├── mcp/              # MCP server: query + get_full_file_contents tools
 │   ├── news/             # news endpoints
 │   └── slack/            # Slack events webhook
 ├── agents/               # background workers (agent + tools + prompts)
 │   ├── jira-agent/       # curates /jira/{KEY}/comments.md
 │   ├── memory-agent/     # dedupes and organizes /memories/
 │   ├── news-agent/       # maintains /news/
+│   ├── retrieval-agent/  # read-only synthesis agent backing the MCP query tool
 │   └── slack-agent/      # curates Slack threads across /slack/, /jira/, /memories/
 ├── lib/
 │   ├── agents/           # shared Agent interface and runner
@@ -79,6 +102,7 @@ backend/src/
 │   ├── tools/            # shared filesystem tool factories
 │   └── utils/            # formatting helpers
 ├── server.ts             # HTTP API (Hono)
+├── mcp.ts                # stdio MCP server entrypoint
 └── cli.ts                # REPL
 
 frontend/src/             # SvelteKit web app
