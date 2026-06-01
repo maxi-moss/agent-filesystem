@@ -7,21 +7,28 @@ import { runMainAgent, summarizeConversation } from "./service.js";
 
 export const chatRoutes = new Hono();
 
-async function parseMessages(context: Context): Promise<UIMessage[]> {
-  const body = await context.req.json<{ messages?: UIMessage[] }>();
+interface ChatBody {
+  messages?: UIMessage[];
+  runId?: string;
+}
+
+async function parseBody(
+  context: Context,
+): Promise<{ messages: UIMessage[]; runId: string | undefined }> {
+  const body = await context.req.json<ChatBody>();
   if (!body.messages?.length) throw new InvalidChatMessagesError("messages required");
-  return body.messages;
+  return { messages: body.messages, runId: body.runId };
 }
 
 chatRoutes.post("/", async (context) => {
-  const messages = await parseMessages(context);
+  const { messages, runId } = await parseBody(context);
   const modelMessages = await convertToModelMessages(messages);
-  const result = runMainAgent(modelMessages);
+  const result = runMainAgent(modelMessages, runId);
   return result.toUIMessageStreamResponse();
 });
 
 chatRoutes.post("/summarize", async (context) => {
-  const messages = await parseMessages(context);
+  const { messages } = await parseBody(context);
   const modelMessages = await convertToModelMessages(messages);
   const summary = await summarizeConversation(modelMessages);
   const summaryPath = `${summarizerConfig.dir}/${new Date().toISOString()}.md`;

@@ -7,9 +7,26 @@ const grepSchema = z.object({
   pattern: z.string(),
   path: z.string().optional(),
   "-i": z.boolean().optional(),
-  "-A": z.number().int().nonnegative().optional(),
-  "-B": z.number().int().nonnegative().optional(),
-  "-C": z.number().int().nonnegative().optional(),
+  "-A": z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Lines of context to show after each match. Omit for no context. e.g. 3"),
+  "-B": z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Lines of context to show before each match. Omit for no context. e.g. 3"),
+  "-C": z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "Lines of context before and after each match; shorthand for -A and -B together. Cannot be combined with -A or -B. Omit for no context. e.g. 3",
+    ),
   output_mode: z.enum(["content", "files_with_matches", "count"]).optional(),
   head_limit: z.number().int().positive().optional(),
 });
@@ -17,8 +34,22 @@ const grepSchema = z.object({
 const findSchema = z.object({
   path: z.string(),
   namePattern: z.string().optional(),
-  mtimeWithinDays: z.number().int().nonnegative().optional(),
-  mtimeOlderThanDays: z.number().int().nonnegative().optional(),
+  mtimeWithinDays: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "Keep files modified within the last N days. Mutually exclusive with mtimeOlderThanDays. Omit to not filter by time. e.g. 7",
+    ),
+  mtimeOlderThanDays: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "Keep files older than N days. Mutually exclusive with mtimeWithinDays. Omit to not filter by time. e.g. 30",
+    ),
 });
 
 /**

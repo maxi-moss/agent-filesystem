@@ -6,16 +6,33 @@ import {
 } from "ai";
 import type { Agent } from "./types.js";
 import { logAgentStep, logAgentError } from "./logger.js";
+import { createRecorder } from "./run-recorder.js";
 
-export function runAgent(agent: Agent, messages: ModelMessage[]) {
+export interface RunOptions {
+  runId?: string | undefined;
+}
+
+export function runAgent(
+  agent: Agent,
+  messages: ModelMessage[],
+  options: RunOptions = {},
+) {
+  const recorder = createRecorder(agent, options.runId);
   return streamText({
     model: agent.model,
     system: agent.buildSystem(),
     messages,
     tools: agent.tools,
     stopWhen: stepCountIs(agent.maxSteps),
-    onStepFinish: (step) => logAgentStep(agent.name, step),
-    onError: ({ error }) => logAgentError(agent.name, error),
+    onStepFinish: (step) => {
+      logAgentStep(agent.name, step);
+      recorder.step(step);
+    },
+    onFinish: () => recorder.finish("done"),
+    onError: ({ error }) => {
+      logAgentError(agent.name, error);
+      recorder.finish("failed");
+    },
   });
 }
 

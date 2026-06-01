@@ -40,17 +40,20 @@ export class Filesystem {
 
   /** Get a single file by exact path. */
   getRow(path: string): FileRow | undefined {
-    return this.db
+    const row = this.db
       .prepare("SELECT * FROM files WHERE path = ?")
       .get(path) as FileRow | undefined;
+    return row && normalizeRowToString(row);
   }
 
   /** Get all files whose path starts with the given prefix. */
   queryByPrefix(prefix: string): FileRow[] {
     const escaped = prefix.replace(/[%_\\]/g, "\\$&");
-    return this.db
-      .prepare("SELECT * FROM files WHERE path LIKE ? ESCAPE '\\'")
-      .all(escaped + "%") as FileRow[];
+    return (
+      this.db
+        .prepare("SELECT * FROM files WHERE path LIKE ? ESCAPE '\\'")
+        .all(escaped + "%") as FileRow[]
+    ).map(normalizeRowToString);
   }
 
   /** Insert or update a file and emit a change event. */
@@ -67,6 +70,13 @@ export class Filesystem {
       .run({ path, content, now });
     this.events.emit("change", { type: "upsert", path } satisfies FsChangeEvent);
   }
+}
+
+/** Guarantee the `content: string` contract. */
+function normalizeRowToString(row: FileRow): FileRow {
+  const content: unknown = row.content;
+  if (typeof content === "string") return row;
+  return { ...row, content: String(content) };
 }
 
 let instance: Filesystem | null = null;

@@ -5,8 +5,8 @@ import { formatConversationForSummary } from "../../lib/utils/formatting.js";
 import { mainAgent } from "./agent.js";
 import { SUMMARIZER_PROMPT } from "./prompts.js";
 
-export function runMainAgent(messages: ModelMessage[]) {
-  return runAgent(mainAgent, messages);
+export function runMainAgent(messages: ModelMessage[], runId?: string) {
+  return runAgent(mainAgent, messages, { runId });
 }
 
 /** Generate a summary of a conversation for long-term storage. */
