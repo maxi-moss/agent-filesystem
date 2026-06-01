@@ -22,6 +22,7 @@
 				<span class="text-text-secondary">/</span>
 				fs
 			</h1>
+			<a href="/agent" class="text-xs text-text-secondary hover:text-text-primary">agent loop →</a>
 			<div class="h-4 w-px bg-border"></div>
 			<Breadcrumb
 				path={fsStore.selectedPath}
